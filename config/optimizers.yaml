@@ -1,17 +1,42 @@
 # Optimizers configuration
 
+  RND:
+    enabled: False
+    description: Random
+    generator: discrete
+    initial_sample: False
+  SHC:
+    enabled: False
+    description: Stochastic Hill Climbing
+    generator: discrete
+    initial_sample: False
   SA:
-    enabled: True
+    enabled: False
     description: Simulated Annealing
     generator: discrete
     initial_sample: True
+  DE:
+    enabled: False
+    description: Differential Evolution
+    generator: discrete
+    initial_sample: False
+  ES:
+    enabled: False
+    description: Evoluation Strategy
+    generator: continuous
+    initial_sample: False
   GA:
     enabled: True
     description: Genetic algorithm with parent selection, mutation, elitism
     generator: discrete
     initial_sample: False
   PSO:
-    enabled: True
+    enabled: False
     description: Particle swarm
+    generator: continuous
+    initial_sample: False
+  GA-HH:
+    enabled: False
+    description: GA-based Hyper heuristics
     generator: continuous
     initial_sample: False

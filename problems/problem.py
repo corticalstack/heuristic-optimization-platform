@@ -6,7 +6,8 @@ class Problem:
     """
     Problem super class
     """
-    def __init__(self):
+    def __init__(self, random):
+        self.random = random
         self.vis = Visualisation()
         self.logger = logging.getLogger()
         self.budget = {'total': 0, 'remaining': 0}

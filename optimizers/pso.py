@@ -5,13 +5,11 @@ from utils import logger as lg
 import copy
 import math
 import numpy as np
-import random
-random.seed(42)  # Seed the random number generator
 
 
 class PSO(Optimizer):
-    def __init__(self, cfg, prb):
-        Optimizer.__init__(self, cfg, prb)
+    def __init__(self, random, cfg, prb):
+        Optimizer.__init__(self, random, cfg, prb)
 
         # Optimizer specific        
         self.number_genes = 0
@@ -52,7 +50,7 @@ class PSO(Optimizer):
             
             # Set random velocity
             candidate.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) * 
-                                        random.uniform(0, 1), 2) for j in range(self.number_genes)]
+                                        self.random.uniform(0, 1), 2) for j in range(self.number_genes)]
 
             self.archive_local_best(candidate)
             self.population.append(candidate)
@@ -113,8 +111,8 @@ class PSO(Optimizer):
     def velocity(self, particle):
         for pi, p in enumerate(particle.perm_cont):
             exp_inertia = particle.perm_cont[pi] + self.weight * (particle.perm_cont[pi] - particle.local_best_perm_cont[pi])
-            exp_local = self.local_c1 * random.random() * (particle.local_best_perm_cont[pi] - particle.perm_cont[pi])
-            exp_global = self.global_c2 * random.random() * (self.global_best.perm_cont[pi] - particle.perm_cont[pi])
+            exp_local = self.local_c1 * self.random.random() * (particle.local_best_perm_cont[pi] - particle.perm_cont[pi])
+            exp_global = self.global_c2 * self.random.random() * (self.global_best.perm_cont[pi] - particle.perm_cont[pi])
             particle.velocity[pi] = exp_inertia + exp_local + exp_global
 
     def clamp(self, n):

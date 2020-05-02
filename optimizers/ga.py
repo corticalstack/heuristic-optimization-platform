@@ -4,13 +4,11 @@ import logging
 from utils import logger as lg
 import math
 import numpy as np
-import random
-random.seed(42)  # Seed the random number generator
 
 
 class GA(Optimizer):
-    def __init__(self, cfg, prb):
-        Optimizer.__init__(self, cfg, prb)
+    def __init__(self, random, cfg, prb):
+        Optimizer.__init__(self, random, cfg, prb)
 
         # Optimizer specific
         self.parents = []
@@ -89,7 +87,7 @@ class GA(Optimizer):
         fitness_proportionate = [particle.fitness / max_fitness for particle in self.population]
 
         pointer_distance = 1 / self.number_parents
-        start_point = random.uniform(0, pointer_distance)
+        start_point = self.random.uniform(0, pointer_distance)
         points = [start_point + i * pointer_distance for i in range(self.number_parents)]
 
         # Add boundary points
@@ -114,7 +112,7 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.number_children):
-            crossover_point = random.randint(1, self.number_genes - 1)
+            crossover_point = self.random.randint(1, self.number_genes - 1)
             child = self.population[self.parents[0]].perm[:crossover_point]
             for c in self.population[self.parents[1]].perm:
                 if c not in child:
@@ -130,6 +128,6 @@ class GA(Optimizer):
         # Swap positions of the 2 job tasks in the candidate
         for i in range(self.number_children):
             # Generate 2 task numbers at random, within range
-            tasks = random.sample(range(0, self.number_genes), 2)
+            tasks = self.random.sample(range(0, self.number_genes), 2)
             self.children[i][tasks[0]], self.children[i][tasks[1]] = \
                 self.children[i][tasks[1]], self.children[i][tasks[0]]

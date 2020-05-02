@@ -4,16 +4,14 @@ from utils import logger as lg
 from utils.stats import Stats
 import math
 import numpy as np
-import random
-random.seed(42)  # Seed the random number generator
 
 
 class FSSP(Problem):
     """
     Flow Shop Scheduling Problem (FSSP)
     """
-    def __init__(self, cfg, oid, iid):
-        Problem.__init__(self)
+    def __init__(self, random, cfg, oid, iid):
+        Problem.__init__(self, random)
         self.cfg = cfg
         self.oid = oid
         self.iid = iid

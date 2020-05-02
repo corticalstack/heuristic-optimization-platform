@@ -1,3 +1,4 @@
+from random import Random
 from utils.visualisation import Visualisation
 from config.config import *
 import os
@@ -5,9 +6,13 @@ import sys
 from datetime import datetime
 import copy
 from problems.fssp import *
+from optimizers.rnd import RND
+from optimizers.shc import SHC
 from optimizers.sa import SA
 from optimizers.ga import GA
 from optimizers.pso import PSO
+from optimizers.de import ACO
+
 import time
 
 script_name = os.path.basename(sys.argv[0]).split('.')
@@ -19,6 +24,9 @@ class HeuristicOptimizerPlatform:
     """
     def __init__(self):
         lg.msg(logging.INFO, 'Starting Heuristic Optimizer Platform (HOP)')
+
+        self.random = Random()
+        self.random.seed(42)
 
         self.cfg = Config()
         self.vis = Visualisation()
@@ -62,11 +70,11 @@ class HeuristicOptimizerPlatform:
         
         # Get class for problem and instantiate 
         cls = globals()[pid]
-        problem = cls(self.cfg, oid, iid)
+        problem = cls(self.random, self.cfg, oid, iid)
 
         # Get class for optimizer and instantiate
         cls = globals()[oid]
-        optimizer = cls(self.cfg, problem)
+        optimizer = cls(self.random, self.cfg, problem)
 
         # Execute optimizer configured number of times to sample problem results
         lg.msg(logging.INFO, 'Executing {} sample runs'.format(self.cfg.settings['gen']['runs_per_optimizer']))
