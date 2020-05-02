@@ -1,0 +1,15 @@
+# Benchmark instances configuration
+
+  FSSP:
+    type: Taillard
+    description: Well-known Taillard
+    link: http://mistic.heig-vd.ch/taillard/problemes.dir/ordonnancement.dir/ordonnancement.html
+    instances:
+      taillard_20_5_i1.txt:
+        enabled: False
+      taillard_20_10_i1.txt:
+        enabled: True
+      taillard_50_10_i1.txt:
+        enabled: False
+      taillard_100_10_i1.txt:
+        enabled: False

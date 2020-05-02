@@ -1,0 +1,8 @@
+# Problem configuration
+
+  FSSP:
+    enabled: True
+    description: Flow Shop Scheduling Problem
+  tsp:
+    enabled: False
+    description: Travelling Salesman Problem
