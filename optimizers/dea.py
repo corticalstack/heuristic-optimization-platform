@@ -5,7 +5,7 @@ import inspyred
 from optimizers.inspyred_wrapper import InspyredWrapper
 
 
-class DE(Optimizer):
+class DEA(Optimizer):
     def __init__(self, random, cfg, prb):
         Optimizer.__init__(self, random, cfg, prb)
         self.initial_candidate_size = 30

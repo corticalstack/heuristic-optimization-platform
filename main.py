@@ -9,10 +9,11 @@ from problems.fssp import *
 from optimizers.rnd import RND
 from optimizers.shc import SHC
 from optimizers.es import ES
-from optimizers.de import DE
+from optimizers.dea import DEA
 from optimizers.sa import SA
 from optimizers.ga import GA
 from optimizers.pso import PSO
+from optimizers.hh import HH
 
 import time
 
@@ -61,21 +62,15 @@ class HeuristicOptimizerPlatform:
                 # Summarise results as optimization has completed
                 self.summary()
                 
-        except KeyError:
-            lg.msg(logging.INFO, 'Key error during optimization of problem benchmark instances. Terminating')
+        except KeyError as e:
+            lg.msg(logging.INFO, 'Key error {} during optimization. Terminating'.format(e))
 
         lg.msg(logging.INFO, 'Flow shop scheduling problem completed')
 
     def optimize_problem_benchmark_instance(self, pid, iid, oid):
         lg.msg(logging.INFO, 'Optimizing problem benchmark with optimizer {}'.format(oid))
-        
-        # Get class for problem and instantiate 
-        cls = globals()[pid]
-        problem = cls(self.random, self.cfg, oid, iid)
 
-        # Get class for optimizer and instantiate
-        cls = globals()[oid]
-        optimizer = cls(self.random, self.cfg, problem)
+        problem, optimizer = self.instantiate_optimization_components(pid, iid, oid)
 
         # Execute optimizer configured number of times to sample problem results
         lg.msg(logging.INFO, 'Executing {} sample runs'.format(self.cfg.settings['gen']['runs_per_optimizer']))
@@ -84,19 +79,15 @@ class HeuristicOptimizerPlatform:
         for i in range(self.cfg.settings['gen']['runs_per_optimizer']):
 
             opt_run_start_time = time.time()
+
             optimizer.before_start()
             run_best_cf, run_best_cp, run_ft = optimizer.optimize()  # Execute optimizer
             optimizer.on_completion()
+
             total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
 
             lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best_cf, run_best_cp))
-
-            if run_best_cf < self.cfg.settings['opt'][oid]['best_cf']:
-                self.cfg.settings['opt'][oid]['best_cf'] = run_best_cf
-                self.cfg.settings['opt'][oid]['best_cp'] = run_best_cp
-
-            # Log best fitness for this run to see trend over execution runs
-            self.cfg.settings['opt'][oid]['ft'].append(run_best_cf)
+            self.log_optimizer_fitness(oid, run_best_cf, run_best_cp)
 
             self.vis.fitness_trend(run_ft)  # Plot run-specific trend
 
@@ -105,6 +96,25 @@ class HeuristicOptimizerPlatform:
 
         # Execute problem-specific tasks upon optimization completion, for e.g. generate gantt chart of best schedule
         problem.on_completion(self.cfg, oid)
+
+    def instantiate_optimization_components(self, pid, iid, oid):
+        # Get class for problem and instantiate
+        cls = globals()[pid]
+        problem = cls(self.random, self.cfg, oid, iid)
+
+        # Get class for optimizer and instantiate
+        cls = globals()[self.cfg.settings['opt'][oid]['optimizer']]
+        optimizer = cls(self.random, self.cfg, problem)
+
+        return problem, optimizer
+
+    def log_optimizer_fitness(self, oid, cf, cp):
+        if cf < self.cfg.settings['opt'][oid]['best_cf']:
+            self.cfg.settings['opt'][oid]['best_cf'] = cf
+            self.cfg.settings['opt'][oid]['best_cp'] = cp
+
+        # Log best fitness for this run to see trend over execution runs
+        self.cfg.settings['opt'][oid]['ft'].append(cf)
 
     def add_opt_runtime_stats(self):
         for oid in self.cfg.settings['opt']:

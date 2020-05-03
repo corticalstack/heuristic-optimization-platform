@@ -20,7 +20,7 @@ class InspyredWrapper:
 
     @staticmethod
     def observer(population, num_generations, num_evaluations, args):
-        if args['slf'].__class__.__name__ == 'DE':
+        if args['slf'].__class__.__name__ == 'DEA':
             args['slf'].fitness_trend = [o.fitness for o in population]
         else:
             best = max(population)  # Persist best fitness as population evolves
