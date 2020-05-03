@@ -8,10 +8,11 @@ import copy
 from problems.fssp import *
 from optimizers.rnd import RND
 from optimizers.shc import SHC
+from optimizers.es import ES
+from optimizers.de import DE
 from optimizers.sa import SA
 from optimizers.ga import GA
 from optimizers.pso import PSO
-from optimizers.de import ACO
 
 import time
 

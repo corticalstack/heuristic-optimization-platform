@@ -93,20 +93,13 @@ class PSO(Optimizer):
         self.global_best.perm = candidate.perm
         self.global_best.perm_cont = candidate.perm_cont
 
-
-    @staticmethod
-    def transform_cont_perm(particle):
-        # Get smallest position value
-        spv = sorted(range(len(particle.perm_cont)), key=lambda i: particle.perm_cont[i], reverse=False)
-        return spv
-
     def perturb_perm(self):
         for ci, candidate in enumerate(self.population):
             if ci == 0:
                 continue
             for ji, j in enumerate(candidate.perm):
                 candidate.perm_cont[ji] += candidate.velocity[ji]
-            candidate.perm = self.transform_cont_perm(candidate)
+            candidate.perm = self.prb.perm_spv_cont_to_discrete(candidate.perm_cont)
 
     def velocity(self, particle):
         for pi, p in enumerate(particle.perm_cont):

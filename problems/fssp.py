@@ -24,6 +24,9 @@ class FSSP(Problem):
         self.iub = 0  # Instance upper bound
         self.load_instance()
 
+        # Set n dimensions
+        self.n_dimensions = self.jobs['quantity']
+
         # Set computational budget scaled to problem instance dimensions
         self.set_budget()
 
@@ -84,7 +87,7 @@ class FSSP(Problem):
     def generator_continuous(self, pos_min, pos_max):
         candidate = []
         for j in range(self.jobs['quantity']):
-            candidate.append(round(pos_min + (pos_max - pos_min) * random.uniform(0, 1), 2))
+            candidate.append(round(pos_min + (pos_max - pos_min) * self.random.uniform(0, 1), 2))
         return candidate
 
     def evaluator(self, candidate):
@@ -141,8 +144,7 @@ class FSSP(Problem):
                     continue
                 idle_time += j[pi][1] - end_time
                 end_time = j[pi][2]
-            lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}'.format(str(p), str(start_time), str(end_time),
-                                                                   str(idle_time)))
+            lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}'.format(str(p), str(start_time), str(end_time), str(idle_time)))
             total_idle_time += idle_time
         lg.msg(logging.INFO, 'Jobs total idle time is {}'.format(total_idle_time))
 

@@ -16,7 +16,7 @@
     generator: discrete
     initial_sample: True
   DE:
-    enabled: False
+    enabled: True
     description: Differential Evolution
     generator: discrete
     initial_sample: False
