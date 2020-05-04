@@ -68,7 +68,7 @@ class FSSP(Problem):
 
     def set_budget(self):
         # Base budget * problem dimensions
-        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.jobs['quantity']
+        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n_dimensions
         self.budget['remaining'] = self.budget['total']
 
     def generate_initial_sample(self):

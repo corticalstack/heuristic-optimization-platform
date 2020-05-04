@@ -43,7 +43,7 @@ class PSO(Optimizer):
             candidate.perm_cont = getattr(self.prb, 'generator_' + generator)(self.pos_min, self.pos_max)
             
             # Transform perm of cont values back to discrete job id's using smallest position value method
-            candidate.perm = self.transform_cont_perm(candidate)
+            candidate.perm = self.prb.perm_spv_continuous_to_discrete(candidate.perm_cont)
             
             # Calculate fitness based on discrete jobs ids perm
             candidate.fitness = self.prb.evaluator(candidate.perm)
@@ -99,7 +99,7 @@ class PSO(Optimizer):
                 continue
             for ji, j in enumerate(candidate.perm):
                 candidate.perm_cont[ji] += candidate.velocity[ji]
-            candidate.perm = self.prb.perm_spv_cont_to_discrete(candidate.perm_cont)
+            candidate.perm = self.prb.perm_spv_continuous_to_discrete(candidate.perm_cont)
 
     def velocity(self, particle):
         for pi, p in enumerate(particle.perm_cont):

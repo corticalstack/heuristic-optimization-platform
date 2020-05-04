@@ -38,9 +38,6 @@ class GA(Optimizer):
             candidate.perm = getattr(self.prb, 'generator_' + self.cfg.settings['opt']['GA']['generator'])()
             self.population.append(candidate)
 
-        if len(self.population) > 0:
-            self.number_genes = len(self.population[0].perm)
-
         while self.prb.budget['remaining'] > 0:
             for ci, candidate in enumerate(self.population):
                 if candidate.fitness == candidate.fitness_default:
@@ -112,7 +109,7 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.number_children):
-            crossover_point = self.random.randint(1, self.number_genes - 1)
+            crossover_point = self.random.randint(1, self.prb.n_dimensions - 1)
             child = self.population[self.parents[0]].perm[:crossover_point]
             for c in self.population[self.parents[1]].perm:
                 if c not in child:
@@ -128,6 +125,6 @@ class GA(Optimizer):
         # Swap positions of the 2 job tasks in the candidate
         for i in range(self.number_children):
             # Generate 2 task numbers at random, within range
-            tasks = self.random.sample(range(0, self.number_genes), 2)
+            tasks = self.random.sample(range(0, self.prb.n_dimensions), 2)
             self.children[i][tasks[0]], self.children[i][tasks[1]] = \
                 self.children[i][tasks[1]], self.children[i][tasks[0]]
