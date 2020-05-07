@@ -1,6 +1,6 @@
 from scipy.stats import ranksums
 import logging
-from utils import logger as lg
+from utilities import logger as lg
 import statistics
 from collections import OrderedDict
 

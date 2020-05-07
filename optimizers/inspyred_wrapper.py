@@ -4,8 +4,9 @@ class InspyredWrapper:
 
     @staticmethod
     def generator(random, args):
-        perm = getattr(args['prb'], 'generator_' + args['cfg'].settings['opt']['ES']['generator'])(args['slf'].pos_min,
-                                                                                                   args['slf'].pos_max,)
+        perm = getattr(args['problem'], 'generator_' + args['cfg'].settings['opt']['ES']['generator'])(args['problem'].n,
+                                                                                                       args['slf'].pos_min,
+                                                                                                       args['slf'].pos_max,)
         return perm
 
     @staticmethod
@@ -13,8 +14,8 @@ class InspyredWrapper:
         fitness = []
         for c in candidates:
             if isinstance(c[0], float):
-                c = args['slf'].prb.perm_spv_continuous_to_discrete(c)
-            f = args['prb'].evaluator(c)
+                c = args['slf'].problem.perm_spv_continuous_to_discrete(c)
+            f, _ = args['problem'].evaluator(c)
             fitness.append(f)
         return fitness
 

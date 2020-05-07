@@ -1,5 +1,5 @@
 from random import Random
-from utils.visualisation import Visualisation
+from utilities.visualisation import Visualisation
 from config.config import *
 import os
 import sys
@@ -34,7 +34,7 @@ class HeuristicOptimizerPlatform:
         self.vis = Visualisation()
 
         # Add runtime stats template to each optimizer
-        self.opt_runtime_stats = {'best_cf': 999999999, 'best_cp': [], 'lb_diff_pct': 0, 'ub_diff_pct': 0, 'avg_cts': 0,
+        self.opt_runtime_stats = {'bcf': 999999999, 'bcp': [], 'lb_diff_pct': 0, 'ub_diff_pct': 0, 'avg_cts': 0,
                                   'ft': []}
         self.add_opt_runtime_stats()
 
@@ -70,7 +70,7 @@ class HeuristicOptimizerPlatform:
     def optimize_problem_benchmark_instance(self, pid, iid, oid):
         lg.msg(logging.INFO, 'Optimizing problem benchmark with optimizer {}'.format(oid))
 
-        problem, optimizer = self.instantiate_optimization_components(pid, iid, oid)
+        problem, optimizer = self.make_components(pid=pid, iid=iid, oid=oid)
 
         # Execute optimizer configured number of times to sample problem results
         lg.msg(logging.INFO, 'Executing {} sample runs'.format(self.cfg.settings['gen']['runs_per_optimizer']))
@@ -80,14 +80,12 @@ class HeuristicOptimizerPlatform:
 
             opt_run_start_time = time.time()
 
-            optimizer.before_start()
-            run_best_cf, run_best_cp, run_ft = optimizer.optimize()  # Execute optimizer
-            optimizer.on_completion()
+            run_bcf, run_bcp, run_ft = optimizer.run(budget=problem.budget['total'])  # Execute optimizer
 
             total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
 
-            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best_cf, run_best_cp))
-            self.log_optimizer_fitness(oid, run_best_cf, run_best_cp)
+            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_bcf, run_bcp))
+            self.log_optimizer_fitness(oid=oid, bcf=run_bcf, bcp=run_bcp)
 
             self.vis.fitness_trend(run_ft)  # Plot run-specific trend
 
@@ -95,26 +93,31 @@ class HeuristicOptimizerPlatform:
         self.cfg.settings['opt'][oid]['avg_cts'] = total_cts / self.cfg.settings['gen']['runs_per_optimizer']
 
         # Execute problem-specific tasks upon optimization completion, for e.g. generate gantt chart of best schedule
-        problem.on_completion(self.cfg, oid)
+        problem.post_processing(oid=oid)
 
-    def instantiate_optimization_components(self, pid, iid, oid):
+    def load_components(self):
+        pass
+        # load components
+
+    # make components
+    def make_components(self, **kwargs):
         # Get class for problem and instantiate
-        cls = globals()[pid]
-        problem = cls(self.random, self.cfg, oid, iid)
+        cls = globals()[kwargs['pid']]
+        problem = cls(random=self.random, cfg=self.cfg, oid=kwargs['oid'], iid=kwargs['iid'])
 
         # Get class for optimizer and instantiate
-        cls = globals()[self.cfg.settings['opt'][oid]['optimizer']]
-        optimizer = cls(self.random, self.cfg, problem)
+        cls = globals()[self.cfg.settings['opt'][kwargs['oid']]['optimizer']]
+        optimizer = cls(random=self.random, cfg=self.cfg, problem=problem)
 
         return problem, optimizer
 
-    def log_optimizer_fitness(self, oid, cf, cp):
-        if cf < self.cfg.settings['opt'][oid]['best_cf']:
-            self.cfg.settings['opt'][oid]['best_cf'] = cf
-            self.cfg.settings['opt'][oid]['best_cp'] = cp
+    def log_optimizer_fitness(self, **kwargs):
+        if kwargs['bcf'] < self.cfg.settings['opt'][kwargs['oid']]['bcf']:
+            self.cfg.settings['opt'][kwargs['oid']]['bcf'] = kwargs['bcf']
+            self.cfg.settings['opt'][kwargs['oid']]['bcp'] = kwargs['bcp']
 
         # Log best fitness for this run to see trend over execution runs
-        self.cfg.settings['opt'][oid]['ft'].append(cf)
+        self.cfg.settings['opt'][kwargs['oid']]['ft'].append(kwargs['bcf'])
 
     def add_opt_runtime_stats(self):
         for oid in self.cfg.settings['opt']:

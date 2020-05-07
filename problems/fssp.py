@@ -1,7 +1,7 @@
 from problems.problem import Problem
 import logging
-from utils import logger as lg
-from utils.stats import Stats
+from utilities import logger as lg
+from utilities.stats import Stats
 import math
 import numpy as np
 
@@ -10,11 +10,11 @@ class FSSP(Problem):
     """
     Flow Shop Scheduling Problem (FSSP)
     """
-    def __init__(self, random, cfg, oid, iid):
-        Problem.__init__(self, random)
-        self.cfg = cfg
-        self.oid = oid
-        self.iid = iid
+    def __init__(self, **kwargs):
+        Problem.__init__(self, **kwargs)
+        self.cfg = kwargs['cfg']
+        self.oid = kwargs['oid']
+        self.iid = kwargs['iid']
 
         self.jobs = {'quantity': 0, 'list': [], 'total_units': []}
         self.machines = {'quantity': 0, 'loadout_times': [], 'lower_bounds_taillard': [], 'assigned_jobs': []}
@@ -25,7 +25,7 @@ class FSSP(Problem):
         self.load_instance()
 
         # Set n dimensions
-        self.n_dimensions = self.jobs['quantity']
+        self.n = self.jobs['quantity']
 
         # Set computational budget scaled to problem instance dimensions
         self.set_budget()
@@ -35,23 +35,24 @@ class FSSP(Problem):
         self.machines_set_lower_bounds_taillard()
 
         # Initial sample may be used to determine search starting point
-        if cfg.settings['opt'][oid]['initial_sample']:
-            self.initial_sample = self.generate_initial_sample()
+        if 'initial_sample' in self.cfg.settings['opt'][self.oid]:
+            if self.cfg.settings['opt'][self.oid]['initial_sample']:
+                self.initial_sample = self.generate_initial_sample()
 
-    def on_completion(self, cfg, oid):
-        best_cp = cfg.settings['opt'][oid]['best_cp']
+    def post_processing(self, **kwargs):
+        bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
 
-        cfg.settings['opt'][oid]['lb_diff_pct'], cfg.settings['opt'][oid]['ub_diff_pct'] = Stats.taillard_compare(
-            self.ilb, self.iub, cfg.settings['opt'][oid]['best_cf'])
+        self.cfg.settings['opt'][kwargs['oid']]['lb_diff_pct'], self.cfg.settings['opt'][kwargs['oid']]['ub_diff_pct'] \
+            = Stats.taillard_compare(self.ilb, self.iub, self.cfg.settings['opt'][kwargs['oid']]['bcf'])
 
-        fitness = self.evaluator(best_cp)  # set machine assigned jobs to best permutation
-        self.vis.gantt_schedule(fitness, self.machines, self.jobs)
+        fitness, _ = self.evaluator(bcp)  # set machine assigned jobs to best permutation
+        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs)
 
         lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
-        self.machines_times(best_cp)
+        self.machines_times(bcp)
 
-        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, best_cp))
-        self.jobs_times(best_cp)
+        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, bcp))
+        self.jobs_times(bcp)
 
     def load_instance(self):
         filename = 'benchmarks/fssp/' + self.iid
@@ -68,29 +69,18 @@ class FSSP(Problem):
 
     def set_budget(self):
         # Base budget * problem dimensions
-        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n_dimensions
+        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
         self.budget['remaining'] = self.budget['total']
 
     def generate_initial_sample(self):
         sample = []
         num = int(math.pow(self.jobs['quantity'], 2))
         for i in range(num):
-            sample.append(getattr(self, 'generator_' + self.cfg.settings['opt'][self.oid]['generator'])())
+            sample.append(getattr(self, 'generator_' + self.cfg.settings['opt'][self.oid]['generator'])(self.n))
 
         return sample
 
-    def generator_discrete(self):
-        candidate = list(range(0, self.jobs['quantity']))
-        np.random.shuffle(candidate)
-        return candidate
-
-    def generator_continuous(self, pos_min, pos_max):
-        candidate = []
-        for j in range(self.jobs['quantity']):
-            candidate.append(round(pos_min + (pos_max - pos_min) * self.random.uniform(0, 1), 2))
-        return candidate
-
-    def evaluator(self, candidate):
+    def evaluator(self, candidate, budget=1):
         self.machines['assigned_jobs'] = []
         for i in range(0, self.machines['quantity']):
             self.machines['assigned_jobs'].append([])
@@ -111,8 +101,8 @@ class FSSP(Problem):
                 self.machines['assigned_jobs'][mi].append((j, start_time, end_time))
                 start_time = end_time
 
-        self.budget['remaining'] -= 1  # Evaluating has a computational cost so reduce budget
-        return self.machines['assigned_jobs'][-1][-1][2]
+        budget -= 1  # Evaluating has a computational cost so reduce budget
+        return self.machines['assigned_jobs'][-1][-1][2], budget
 
     def jobs_add(self, jobs):
         job_times = [int(n) for n in jobs.split()]

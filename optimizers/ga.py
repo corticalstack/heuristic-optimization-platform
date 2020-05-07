@@ -1,14 +1,14 @@
 from optimizers.optimizer import Optimizer
 from optimizers.particle import Particle
 import logging
-from utils import logger as lg
+from utilities import logger as lg
 import math
 import numpy as np
 
 
 class GA(Optimizer):
-    def __init__(self, random, cfg, prb):
-        Optimizer.__init__(self, random, cfg, prb)
+    def __init__(self, **kwargs):
+        Optimizer.__init__(self, **kwargs)
 
         # Optimizer specific
         self.parents = []
@@ -21,36 +21,33 @@ class GA(Optimizer):
         lg.msg(logging.DEBUG, 'Number of children set to {}'.format(self.number_children))
 
         self.population = []
-        self.number_genes = 0
 
     def optimize(self):
-        self.prb.budget['remaining'] = self.prb.budget['total']
         self.evolve()
-        return self.global_best.fitness, self.global_best.perm, self.fitness_trend
 
     def evolve(self):
-        self.initial_candidate_size = len(getattr(self.prb, 'generator_' +
-                                                  self.cfg.settings['opt']['GA']['generator'])()) * 2
+        self.initial_candidate_size = self.problem.n * 2
+
         lg.msg(logging.DEBUG, 'Initial candidate size set to {}'.format(self.initial_candidate_size))
 
         for i in range(self.initial_candidate_size):
             candidate = Particle()
-            candidate.perm = getattr(self.prb, 'generator_' + self.cfg.settings['opt']['GA']['generator'])()
+            candidate.perm = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['GA']['generator'])(self.problem.n)
             self.population.append(candidate)
 
-        while self.prb.budget['remaining'] > 0:
+        while self.budget > 0:
             for ci, candidate in enumerate(self.population):
                 if candidate.fitness == candidate.fitness_default:
-                    candidate.fitness = self.prb.evaluator(candidate.perm)
+                    candidate.fitness, self.budget = self.problem.evaluator(candidate.perm, self.budget)
 
             # Sort population by fitness ascending
             self.population.sort(key=lambda x: x.fitness, reverse=False)
 
-            if self.population[0].fitness < self.global_best.fitness:
+            if self.population[0].fitness < self.gbest.fitness:
                 lg.msg(logging.DEBUG, 'Previous best is {}, now updated with new best {}'.format(
-                    self.global_best.fitness, self.population[0].fitness))
-                self.global_best.fitness = self.population[0].fitness
-                self.global_best.perm = self.population[0].perm
+                    self.gbest.fitness, self.population[0].fitness))
+                self.gbest.fitness = self.population[0].fitness
+                self.gbest.perm = self.population[0].perm
                 self.fitness_trend.append(self.population[0].fitness)
 
             self.parents = self.parent_selection()
@@ -109,7 +106,7 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.number_children):
-            crossover_point = self.random.randint(1, self.prb.n_dimensions - 1)
+            crossover_point = self.random.randint(1, self.problem.n - 1)
             child = self.population[self.parents[0]].perm[:crossover_point]
             for c in self.population[self.parents[1]].perm:
                 if c not in child:
@@ -125,6 +122,6 @@ class GA(Optimizer):
         # Swap positions of the 2 job tasks in the candidate
         for i in range(self.number_children):
             # Generate 2 task numbers at random, within range
-            tasks = self.random.sample(range(0, self.prb.n_dimensions), 2)
+            tasks = self.random.sample(range(0, self.problem.n), 2)
             self.children[i][tasks[0]], self.children[i][tasks[1]] = \
                 self.children[i][tasks[1]], self.children[i][tasks[0]]

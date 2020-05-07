@@ -26,10 +26,10 @@ class Visualisation:
                 df_ft[opt] = optimizers[opt]['ft']
 
         if not df_ft.empty:
-            g = sns.relplot(kind="line", data=df_ft)
+            g = sns.relplot(kind="line", data=df_ft, dashes=False)
             plt.show()
 
-    def gantt_schedule(self, fitness, machines, jobs):
+    def solution_representation_gantt(self, fitness, machines, jobs):
         x_width = fitness
         if jobs['quantity'] <= 20:
             x_width += 280  # Build in margin for legend
