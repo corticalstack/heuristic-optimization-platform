@@ -24,17 +24,16 @@ class SA(Optimizer):
         lg.msg(logging.DEBUG, 'Cooling rate set to {}'.format(self.cooling_rate))
 
     def optimize(self):
+        self.anneal()
         # Evaluating initial temperature has a one-time computational cost, so reduce budget if required
         if self.initial_temp_cost != 0:
             self.budget += self.initial_temp_cost
             self.initial_temp_cost = 0
 
-        self.anneal()
-        return self.gbest.fitness, self.gbest.perm, self.fitness_trend
-
     def anneal(self):
-        self.gbest.perm = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['SA']['generator'])(self.problem.n)
-        self.gbest.fitness, self.budget = self.problem.evaluator(self.gbest.perm, self.budget)
+        if self.gbest.fitness == self.gbest.fitness_default:
+            self.gbest.perm = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['SA']['generator'])(self.problem.n)
+            self.gbest.fitness, self.budget = self.problem.evaluator(self.gbest.perm, self.budget)
         self.temp = self.initial_temp
 
         while self.budget > 0 and (self.temp > self.temp_threshold):

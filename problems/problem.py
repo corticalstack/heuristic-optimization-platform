@@ -32,6 +32,14 @@ class Problem:
         spv = sorted(range(len(c)), key=lambda i: c[i], reverse=False)
         return spv
 
+    def perm_spv_discrete_to_continuous(self, *args):
+        perm, pos_min, pos_max = args
+        cont = []
+        linspace = np.linspace(pos_min, pos_max, self.n, endpoint=False)
+        for p in perm:
+            cont.append(round(linspace[p], 2))
+        return cont
+
     def generator_continuous(self, *args):
         n, pos_min, pos_max = args
         candidate = []

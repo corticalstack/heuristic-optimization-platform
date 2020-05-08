@@ -80,12 +80,12 @@ class HeuristicOptimizerPlatform:
 
             opt_run_start_time = time.time()
 
-            run_bcf, run_bcp, run_ft = optimizer.run(budget=problem.budget['total'])  # Execute optimizer
+            run_best, run_ft, _ = optimizer.run(budget=problem.budget['total'])  # Execute optimizer
 
             total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
 
-            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_bcf, run_bcp))
-            self.log_optimizer_fitness(oid=oid, bcf=run_bcf, bcp=run_bcp)
+            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.perm))
+            self.log_optimizer_fitness(oid=oid, bcf=run_best.fitness, bcp=run_best.perm)
 
             self.vis.fitness_trend(run_ft)  # Plot run-specific trend
 

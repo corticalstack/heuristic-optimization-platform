@@ -12,8 +12,6 @@ class PSO(Optimizer):
         Optimizer.__init__(self, **kwargs)
 
         # Optimizer specific        
-        self.number_genes = 0
-
         self.pos_min = 0
         self.pos_max = 4
         self.velocity_clip = (-4, 4)
@@ -25,17 +23,26 @@ class PSO(Optimizer):
         self.velocity_max = 4
         self.velocity_min = -4
 
+    @staticmethod
+    def archive_lbest(candidate):
+        candidate.local_best_fitness = candidate.fitness
+        candidate.local_best_perm = candidate.perm
+        candidate.local_best_perm_cont = candidate.perm_cont
+
     def optimize(self):
         self.swarm()
-        return self.gbest.fitness, self.gbest.perm, self.fitness_trend
 
     def swarm(self):
-        generator = self.cfg.settings['opt']['PSO']['generator']
-        self.number_genes = len(getattr(self.problem, 'generator_' + generator)(self.problem.n, self.pos_min, self.pos_max))
-        self.initial_candidate_size = self.number_genes * 2
+        self.initial_candidate_size = self.problem.n * 2
         lg.msg(logging.DEBUG, 'Swarm size to {}'.format(self.initial_candidate_size))
 
-        for i in range(self.initial_candidate_size):
+        # Incoming population migrates to starting population, reset velocity and continuous permutation values
+        if self.population:
+            self.reset_inherited_population_attr()
+
+        # Complete assembly of initial population size, accounting for any incoming migrant population
+        generator = self.cfg.settings['opt']['PSO']['generator']
+        for i in range(self.initial_candidate_size - len(self.population)):
             candidate = Particle()
             
             # Generate perm of cont values within domain bounds
@@ -49,7 +56,7 @@ class PSO(Optimizer):
             
             # Set random velocity
             candidate.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) * 
-                                        self.random.uniform(0, 1), 2) for j in range(self.number_genes)]
+                                        self.random.uniform(0, 1), 2) for j in range(self.problem.n)]
 
             self.archive_lbest(candidate)
             self.population.append(candidate)
@@ -71,21 +78,24 @@ class PSO(Optimizer):
 
             # Update leader in swarm
             if self.population[0].fitness < self.gbest.fitness:
-                self.set_gbest(self.population[0])
-                self.fitness_trend.append(self.gbest.fitness)
                 lg.msg(logging.DEBUG, 'Previous best is {}, now updated with new best {}'.format(
                     self.gbest.fitness, self.population[0].fitness))
+
+                self.set_gbest(self.population[0])
+                self.fitness_trend.append(self.gbest.fitness)
 
             for ci, candidate in enumerate(self.population):                
                 self.velocity(candidate)  # Update velocity of each candidate
 
             self.perturb_perm()
 
-    @staticmethod
-    def archive_lbest(candidate):
-        candidate.local_best_fitness = candidate.fitness
-        candidate.local_best_perm = candidate.perm
-        candidate.local_best_perm_cont = candidate.perm_cont
+    def reset_inherited_population_attr(self):
+        for candidate in self.population:
+            candidate.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) *
+                                        self.random.uniform(0, 1), 2) for j in range(self.problem.n)]
+            candidate.perm_cont = self.problem.perm_spv_discrete_to_continuous(candidate.perm, self.pos_min, self.pos_max)
+
+            self.archive_lbest(candidate)
 
     def set_gbest(self, candidate):
         self.gbest.fitness = candidate.fitness

@@ -34,11 +34,6 @@ class FSSP(Problem):
         self.machines_set_loadout_times()
         self.machines_set_lower_bounds_taillard()
 
-        # Initial sample may be used to determine search starting point
-        if 'initial_sample' in self.cfg.settings['opt'][self.oid]:
-            if self.cfg.settings['opt'][self.oid]['initial_sample']:
-                self.initial_sample = self.generate_initial_sample()
-
     def post_processing(self, **kwargs):
         bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
 
@@ -72,11 +67,11 @@ class FSSP(Problem):
         self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
         self.budget['remaining'] = self.budget['total']
 
-    def generate_initial_sample(self):
+    def generate_initial_sample(self, oid):
         sample = []
         num = int(math.pow(self.jobs['quantity'], 2))
         for i in range(num):
-            sample.append(getattr(self, 'generator_' + self.cfg.settings['opt'][self.oid]['generator'])(self.n))
+            sample.append(getattr(self, 'generator_' + self.cfg.settings['opt'][oid]['generator'])(self.n))
 
         return sample
 
