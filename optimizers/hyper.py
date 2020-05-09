@@ -2,55 +2,82 @@ from optimizers.optimizer import Optimizer
 from optimizers.particle import Particle
 import logging
 from utilities import logger as lg
+from importlib import import_module
+import collections
 
 
 class Hyper(Optimizer):
     def __init__(self, **kwargs):
         Optimizer.__init__(self, **kwargs)
-        # Persist current configuration and problem
 
-        self.range = 1000  # +/- value the randomly select number can be between
-        self.bounds = 2000  # Action space bounds
+        self.low_level_heuristics = collections.OrderedDict()
+        self.import_low_level_heuristics()
+        self.llh_total = len(self.cfg.settings['opt'][self.problem.oid]['low_level_selection_pool'])
+        self.llh_initial_budget = 300
+        self.llh_budget = 1600
+        self.llh_fitness = []
+        self.llh_candidates = []
+        self.llh_exec = []
 
-        self.action_space = [0, 1]
-        #self.observation_space = spaces.Discrete(5)
+    def pre_processing(self, kwargs):
+        Optimizer.pre_processing(self, kwargs)
+        for k, v in self.low_level_heuristics.items():
+            v['run_count'] = 0
+            v['aggr_imp'] = 0
 
-        self.number = 0
-        self.guess_count = 0
-        self.guess_max = 200
-        self.observation = 0
+        self.llh_fitness = [[] for i in range(self.llh_total)]
+        self.llh_candidates = [[] for i in range(self.llh_total)]
+        self.llh_exec = [[] for i in range(self.llh_total)]
 
-        self.seed()
-        self.reset()
+    def post_processing(self):
+        Optimizer.post_processing(self)
+        print('Finished with best of ', self.gbest.fitness)
+        for k, v in self.low_level_heuristics.items():
+            print('Llh {} executed {} times and with aggregated improvements of {}'.format(v['llh'], v['run_count'], v['aggr_imp']))
 
-    def seed(self, seed=None):
-        pass
-        #self.np_random, seed = seeding.np_random(seed)
-        #return [seed]
+    def best_candidate_from_pool(self):
+        best = min((min((v, c) for c, v in enumerate(row)), r) for r, row in enumerate(self.llh_fitness))
+        bcf = self.llh_fitness[best[1]][best[0][1]]
+        bc = self.llh_candidates[best[1]][best[0][1]]
+        bcllh = best[1]
+        print('{} set best fitness {} with candidate {}'.format(self.low_level_heuristics[bcllh]['llh'], bcf, bc))
+        return bcf, bc, bcllh
 
-    def step(self, action):
-        assert self.action_space.contains(action)
+    def set_gbest(self, bcf, bcp):
+        self.gbest.fitness = bcf
+        self.gbest.candidate = bcp
 
-        if action < self.number:
-            self.observation = 1
+    def set_llh_samples(self):
+        # Initialise starting samples
+        for k, v in self.low_level_heuristics.items():
+            for i in range(self.cfg.settings['opt'][self.problem.oid]['low_level_sample_runs']):
+                run_best, run_ft, run_budget = v['cls'].run(budget=self.llh_initial_budget)
+                self.budget += run_budget
+                self.budget -= self.llh_initial_budget
+                self.llh_fitness[k].append(run_best.fitness)  # Insert at start
+                self.llh_candidates[k].append(run_best.candidate)
 
-        elif action == self.number:
-            self.observation = 2
+    def add_samples_to_trend(self):
+        self.fitness_trend = [y for x in self.llh_fitness for y in x]
+        self.fitness_trend.sort(reverse=True)
 
-        elif action > self.number:
-            self.observation = 3
+    def set_pop(self):
+        candidates = list(zip([y for x in self.llh_fitness for y in x], [y for x in self.llh_candidates for y in x]))
+        candidates.sort()
+        population = []
 
-        # JP could set reward according to whether fitness value beats best
+        for fitness, candidate in candidates[:1]:
+            c = Particle()
+            c.fitness = fitness
+            c.candidate = candidate
+            population.append(c)
+        return population
 
-        reward = ((min(action, self.number) + self.bounds) / (max(action, self.number) + self.bounds)) ** 2
-
-        self.guess_count += 1
-        done = self.guess_count >= self.guess_max
-
-        return self.observation, reward, done, {"number": self.number, "guesses": self.guess_count}
-
-    def reset(self):
-        #self.number = self.np_random.uniform(-self.range, self.range)
-        #self.guess_count = 0
-        #self.observation = 0
-        return self.observation
+    def import_low_level_heuristics(self):
+        try:
+            for hci, hc in enumerate(self.cfg.settings['opt'][self.problem.oid]['low_level_selection_pool']):
+                my_module = import_module('optimizers.' + hc.lower())
+                cls = getattr(my_module, hc)(random=self.random, cfg=self.cfg, problem=self.problem)
+                self.low_level_heuristics[hci] = {'llh': hc, 'cls': cls, 'run_count': 0, 'aggr_imp': 0}
+        except (ModuleNotFoundError, AttributeError) as e:
+            lg.msg(logging.INFO, 'HH error {} importing low-level selection pool'.format(e))

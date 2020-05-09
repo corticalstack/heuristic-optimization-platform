@@ -32,13 +32,13 @@ class GA(Optimizer):
 
         for i in range(self.initial_candidate_size):
             candidate = Particle()
-            candidate.perm = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['GA']['generator'])(self.problem.n)
+            candidate.candidate = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['GA']['generator'])(self.problem.n)
             self.population.append(candidate)
 
         while self.budget > 0:
             for ci, candidate in enumerate(self.population):
                 if candidate.fitness == candidate.fitness_default:
-                    candidate.fitness, self.budget = self.problem.evaluator(candidate.perm, self.budget)
+                    candidate.fitness, self.budget = self.problem.evaluator(candidate.candidate, self.budget)
 
             # Sort population by fitness ascending
             self.population.sort(key=lambda x: x.fitness, reverse=False)
@@ -47,7 +47,7 @@ class GA(Optimizer):
                 lg.msg(logging.DEBUG, 'Previous best is {}, now updated with new best {}'.format(
                     self.gbest.fitness, self.population[0].fitness))
                 self.gbest.fitness = self.population[0].fitness
-                self.gbest.perm = self.population[0].perm
+                self.gbest.candidate = self.population[0].candidate
                 self.fitness_trend.append(self.population[0].fitness)
 
             self.parents = self.parent_selection()
@@ -63,13 +63,13 @@ class GA(Optimizer):
         for p in self.parents:
             particle = Particle()
             particle.fitness = self.population[p].fitness
-            particle.perm = self.population[p].perm
+            particle.candidate = self.population[p].candidate
             new_pop.append(particle)
 
         # Add children to population
         for c in self.children:
             particle = Particle()
-            particle.perm = c
+            particle.candidate = c
             new_pop.append(particle)
 
         return new_pop
@@ -78,7 +78,10 @@ class GA(Optimizer):
         # Fitness proportionate selection (FPS), assigning probabilities to individuals acting as parents depending on their
         # fitness
         max_fitness = sum([particle.fitness for particle in self.population])
-        fitness_proportionate = [particle.fitness / max_fitness for particle in self.population]
+        #fitness_proportionate = [particle.fitness / max_fitness for particle in self.population]  # Foor maximisation where higher fitness is better
+
+        # Fitness proportionate where smaller fitness is better
+        fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.population) - 1) for particle in self.population]
 
         pointer_distance = 1 / self.number_parents
         start_point = self.random.uniform(0, pointer_distance)
@@ -107,8 +110,8 @@ class GA(Optimizer):
         children = []
         for i in range(self.number_children):
             crossover_point = self.random.randint(1, self.problem.n - 1)
-            child = self.population[self.parents[0]].perm[:crossover_point]
-            for c in self.population[self.parents[1]].perm:
+            child = self.population[self.parents[0]].candidate[:crossover_point]
+            for c in self.population[self.parents[1]].candidate:
                 if c not in child:
                     child.append(c)
             children.append(child)

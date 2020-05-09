@@ -26,8 +26,8 @@ class PSO(Optimizer):
     @staticmethod
     def archive_lbest(candidate):
         candidate.local_best_fitness = candidate.fitness
-        candidate.local_best_perm = candidate.perm
-        candidate.local_best_perm_cont = candidate.perm_cont
+        candidate.local_best_perm = candidate.candidate
+        candidate.local_best_perm_cont = candidate.candidate_cont
 
     def optimize(self):
         self.swarm()
@@ -43,35 +43,35 @@ class PSO(Optimizer):
         # Complete assembly of initial population size, accounting for any incoming migrant population
         generator = self.cfg.settings['opt']['PSO']['generator']
         for i in range(self.initial_candidate_size - len(self.population)):
-            candidate = Particle()
+            c = Particle()
             
-            # Generate perm of cont values within domain bounds
-            candidate.perm_cont = getattr(self.problem, 'generator_' + generator)(self.problem.n, self.pos_min, self.pos_max)
+            # Generate candidate of cont values within domain bounds
+            c.candidate_cont = getattr(self.problem, 'generator_' + generator)(self.problem.n, self.pos_min, self.pos_max)
             
-            # Transform perm of cont values back to discrete job id's using smallest position value method
-            candidate.perm = self.problem.perm_spv_continuous_to_discrete(candidate.perm_cont)
+            # Transform candidate of cont values back to discrete job id's using smallest position value method
+            c.candidate = self.problem.candidate_spv_continuous_to_discrete(c.candidate_cont)
             
             # Calculate fitness based on discrete jobs ids perm
-            candidate.fitness, self.budget = self.problem.evaluator(candidate.perm, self.budget)
+            c.fitness, self.budget = self.problem.evaluator(c.candidate, self.budget)
             
             # Set random velocity
-            candidate.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) * 
+            c.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) *
                                         self.random.uniform(0, 1), 2) for j in range(self.problem.n)]
 
-            self.archive_lbest(candidate)
-            self.population.append(candidate)
+            self.archive_lbest(c)
+            self.population.append(c)
 
         # Sort population of candidates by fitness ascending to get best (minimization)
         self.population.sort(key=lambda x: x.fitness, reverse=False)
         self.set_gbest(self.population[0])
 
         while self.budget > 0:
-            for ci, candidate in enumerate(self.population):
-                candidate.fitness, self.budget = self.problem.evaluator(candidate.perm, self.budget)
+            for ci, c in enumerate(self.population):
+                c.fitness, self.budget = self.problem.evaluator(c.candidate, self.budget)
 
                 # Evaluate fitness and set personal (local) best
-                if candidate.fitness < candidate.local_best_fitness:
-                    self.archive_lbest(candidate)
+                if c.fitness < c.local_best_fitness:
+                    self.archive_lbest(c)
 
             # Determine the current global best i.e. swarm leader
             self.population.sort(key=lambda x: x.fitness, reverse=False)
@@ -84,37 +84,37 @@ class PSO(Optimizer):
                 self.set_gbest(self.population[0])
                 self.fitness_trend.append(self.gbest.fitness)
 
-            for ci, candidate in enumerate(self.population):                
-                self.velocity(candidate)  # Update velocity of each candidate
+            for ci, c in enumerate(self.population):
+                self.velocity(c)  # Update velocity of each candidate
 
-            self.perturb_perm()
+            self.perturb_candidate()
 
     def reset_inherited_population_attr(self):
-        for candidate in self.population:
-            candidate.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) *
-                                        self.random.uniform(0, 1), 2) for j in range(self.problem.n)]
-            candidate.perm_cont = self.problem.perm_spv_discrete_to_continuous(candidate.perm, self.pos_min, self.pos_max)
+        for c in self.population:
+            c.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) *
+                                self.random.uniform(0, 1), 2) for j in range(self.problem.n)]
+            c.candidate_cont = self.problem.candidate_spv_discrete_to_continuous(c.candidate, self.pos_min, self.pos_max)
 
-            self.archive_lbest(candidate)
+            self.archive_lbest(c)
 
     def set_gbest(self, candidate):
         self.gbest.fitness = candidate.fitness
-        self.gbest.perm = candidate.perm
-        self.gbest.perm_cont = candidate.perm_cont
+        self.gbest.candidate = candidate.candidate
+        self.gbest.candidate_cont = candidate.candidate_cont
 
-    def perturb_perm(self):
-        for ci, candidate in enumerate(self.population):
+    def perturb_candidate(self):
+        for ci, c in enumerate(self.population):
             if ci == 0:
                 continue
-            for ji, j in enumerate(candidate.perm):
-                candidate.perm_cont[ji] += candidate.velocity[ji]
-            candidate.perm = self.problem.perm_spv_continuous_to_discrete(candidate.perm_cont)
+            for ji, j in enumerate(c.candidate):
+                c.candidate_cont[ji] += c.velocity[ji]
+            c.candidate = self.problem.candidate_spv_continuous_to_discrete(c.candidate_cont)
 
     def velocity(self, particle):
-        for pi, p in enumerate(particle.perm_cont):
-            exp_inertia = particle.perm_cont[pi] + self.weight * (particle.perm_cont[pi] - particle.local_best_perm_cont[pi])
-            exp_local = self.local_c1 * self.random.random() * (particle.local_best_perm_cont[pi] - particle.perm_cont[pi])
-            exp_global = self.global_c2 * self.random.random() * (self.gbest.perm_cont[pi] - particle.perm_cont[pi])
+        for pi, p in enumerate(particle.candidate_cont):
+            exp_inertia = particle.candidate_cont[pi] + self.weight * (particle.candidate_cont[pi] - particle.local_best_perm_cont[pi])
+            exp_local = self.local_c1 * self.random.random() * (particle.local_best_perm_cont[pi] - particle.candidate_cont[pi])
+            exp_global = self.global_c2 * self.random.random() * (self.gbest.candidate_cont[pi] - particle.candidate_cont[pi])
             particle.velocity[pi] = exp_inertia + exp_local + exp_global
 
     def clamp(self, n):

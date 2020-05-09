@@ -4,17 +4,18 @@ class InspyredWrapper:
 
     @staticmethod
     def generator(random, args):
-        perm = getattr(args['problem'], 'generator_' + args['cfg'].settings['opt']['ES']['generator'])(args['problem'].n,
-                                                                                                       args['slf'].pos_min,
-                                                                                                       args['slf'].pos_max,)
-        return perm
+        candidate = getattr(args['problem'], 'generator_' + args['cfg'].settings['opt']['ES']['generator'])(
+            args['problem'].n,
+            args['slf'].pos_min,
+            args['slf'].pos_max,)
+        return candidate
 
     @staticmethod
     def evaluator(candidates, args):
         fitness = []
         for c in candidates:
             if isinstance(c[0], float):
-                c = args['slf'].problem.perm_spv_continuous_to_discrete(c)
+                c = args['slf'].problem.candidate_spv_continuous_to_discrete(c)
             f, _ = args['problem'].evaluator(c)
             fitness.append(f)
         return fitness

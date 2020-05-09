@@ -3,6 +3,7 @@ import logging
 from utilities import logger as lg
 import copy
 
+
 class Optimizer:
     def __init__(self, **kwargs):
         # Persist current configuration and problem
@@ -34,14 +35,14 @@ class Optimizer:
         gbest = copy.deepcopy(self.gbest)
         return gbest, self.fitness_trend, self.budget
 
-    def n_swap(self, perm):
+    def n_swap(self, candidate):
         # This does a local search by swapping two random jobs
-        new_perm = perm.copy()
-        idx = self.random.sample(range(0, len(new_perm)), 2)
+        new_candidate = candidate.copy()
+        idx = self.random.sample(range(0, len(new_candidate)), 2)
 
         # Pair swap
-        new_perm[idx[0]], new_perm[idx[1]] = new_perm[idx[1]], new_perm[idx[0]]
-        return new_perm
+        new_candidate[idx[0]], new_candidate[idx[1]] = new_candidate[idx[1]], new_candidate[idx[0]]
+        return new_candidate
 
     def n_insert(self):
         pass

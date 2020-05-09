@@ -16,7 +16,7 @@ class DEA(Optimizer):
 
     def optimize(self):
         self.evolve()
-        return self.gbest.fitness, self.gbest.perm, self.fitness_trend
+        return self.gbest.fitness, self.gbest.candidate, self.fitness_trend
 
     def evolve(self):
         dea = inspyred.ec.DEA(self.random)
@@ -34,7 +34,7 @@ class DEA(Optimizer):
 
         final_pop.sort(reverse=True)
         self.gbest.fitness = final_pop[0].fitness
-        self.gbest.perm = self.problem.perm_spv_continuous_to_discrete(final_pop[0].candidate)
+        self.gbest.candidate = self.problem.candidate_spv_continuous_to_discrete(final_pop[0].candidate)
 
         self.fitness_trend = list(set(self.fitness_trend))  # Remove duplicates
         self.fitness_trend.sort(reverse=True)

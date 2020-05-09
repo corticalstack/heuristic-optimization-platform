@@ -16,7 +16,7 @@ class ES(Optimizer):
 
     def optimize(self):
         self.evolve()
-        return self.gbest.fitness, self.gbest.perm, self.fitness_trend
+        return self.gbest.fitness, self.gbest.candidate, self.fitness_trend
 
     def evolve(self):
         es = inspyred.ec.ES(self.random)
@@ -36,7 +36,7 @@ class ES(Optimizer):
         final_pop.sort(reverse=True)
         self.gbest.fitness = final_pop[0].fitness
 
-        # Inspyred ES extends candidate with strategy elements, slice for actual solution perm associated with fitness
-        self.gbest.perm = self.problem.perm_spv_continuous_to_discrete(final_pop[0].candidate[:self.problem.n])
+        # Inspyred ES extends candidate with strategy elements, slice for actual solution cand. associated with fitness
+        self.gbest.candidate = self.problem.candidate_spv_continuous_to_discrete(final_pop[0].candidate[:self.problem.n])
         self.fitness_trend = list(set(self.fitness_trend))  # Remove duplicates
         self.fitness_trend.sort(reverse=True)

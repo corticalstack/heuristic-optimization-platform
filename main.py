@@ -84,8 +84,8 @@ class HeuristicOptimizerPlatform:
 
             total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
 
-            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.perm))
-            self.log_optimizer_fitness(oid=oid, bcf=run_best.fitness, bcp=run_best.perm)
+            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.candidate))
+            self.log_optimizer_fitness(oid=oid, bcf=run_best.fitness, bcp=run_best.candidate)
 
             self.vis.fitness_trend(run_ft)  # Plot run-specific trend
 

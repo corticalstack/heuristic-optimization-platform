@@ -32,15 +32,15 @@ class SA(Optimizer):
 
     def anneal(self):
         if self.gbest.fitness == self.gbest.fitness_default:
-            self.gbest.perm = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['SA']['generator'])(self.problem.n)
-            self.gbest.fitness, self.budget = self.problem.evaluator(self.gbest.perm, self.budget)
+            self.gbest.candidate = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['SA']['generator'])(self.problem.n)
+            self.gbest.fitness, self.budget = self.problem.evaluator(self.gbest.candidate, self.budget)
         self.temp = self.initial_temp
 
         while self.budget > 0 and (self.temp > self.temp_threshold):
             new = Particle()
-            new.perm = self.n_swap(self.gbest.perm)
+            new.candidate = self.n_swap(self.gbest.candidate)
 
-            new.fitness, self.budget = self.problem.evaluator(new.perm, self.budget)
+            new.fitness, self.budget = self.problem.evaluator(new.candidate, self.budget)
             loss = self.gbest.fitness - new.fitness
             probability = math.exp(loss / self.temp)
 
@@ -51,7 +51,7 @@ class SA(Optimizer):
                 if rr < probability:
                     lg.msg(logging.DEBUG, 'Random {} less than probability {}'.format(rr, probability))
                 self.gbest.fitness = new.fitness
-                self.gbest.perm = new.perm
+                self.gbest.candidate = new.candidate
                 self.fitness_trend.append(self.gbest.fitness)
 
             self.temp *= self.cooling_rate

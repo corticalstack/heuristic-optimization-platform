@@ -15,10 +15,10 @@ class Problem:
         self.budget = {'total': 0, 'remaining': 0}
 
     def pre_processing(self):
-        pass
+        pass  # Placeholder
 
     def post_processing(self):
-        pass
+        pass  # Placeholder
 
     @staticmethod
     def generator_discrete(n):
@@ -27,17 +27,17 @@ class Problem:
         return candidate
 
     @staticmethod
-    def perm_spv_continuous_to_discrete(c):
+    def candidate_spv_continuous_to_discrete(c):
         # Get smallest position value
         spv = sorted(range(len(c)), key=lambda i: c[i], reverse=False)
         return spv
 
-    def perm_spv_discrete_to_continuous(self, *args):
-        perm, pos_min, pos_max = args
+    def candidate_spv_discrete_to_continuous(self, *args):
+        candidate, pos_min, pos_max = args
         cont = []
         linspace = np.linspace(pos_min, pos_max, self.n, endpoint=False)
-        for p in perm:
-            cont.append(round(linspace[p], 2))
+        for c in candidate:
+            cont.append(round(linspace[c], 2))
         return cont
 
     def generator_continuous(self, *args):
