@@ -1,6 +1,7 @@
-from optimizers.particle import Particle
 import logging
 from utilities import logger as lg
+
+from optimizers.particle import Particle
 import copy
 
 
@@ -8,32 +9,13 @@ class Optimizer:
     def __init__(self, **kwargs):
         # Persist current configuration and problem
         self.random = kwargs['random']
-        self.cfg = kwargs['cfg']
-        self.problem = kwargs['problem']
-
-        self.logger = logging.getLogger()
+        self.hj = kwargs['hopjob']
         self.initial_candidate_size = 1
-        self.gbest = None
-        self.population = []
-        self.fitness_trend = []
-        self.budget = 0
 
-        # Initial sample may be used to determine search starting point
-        try:
-            if 'initial_sample' in self.cfg.settings['opt'][self.__class__.__name__]:
-                if self.cfg.settings['opt'][self.__class__.__name__]['initial_sample']:
-                    self.problem.initial_sample = self.problem.generate_initial_sample(self.__class__.__name__)
-        except KeyError:
-            pass
-
-    def run(self, **kwargs):
-        self.budget = kwargs['budget']
-        self.pre_processing(kwargs)
+    def run(self):
+        self.pre_processing()
         self.optimize()
         self.post_processing()
-
-        gbest = copy.deepcopy(self.gbest)
-        return gbest, self.fitness_trend, self.budget
 
     def n_swap(self, candidate):
         # This does a local search by swapping two random jobs
@@ -56,21 +38,24 @@ class Optimizer:
     def n_sbox(self):
         pass
 
-    def pre_processing(self, kwargs):
-        self.fitness_trend = []
+    def pre_processing(self):
+        # self.fitness_trend = []
+        #
+        # # Set global best single particle if passed
+        # if 'gbest' in kwargs:
+        #     self.gbest = kwargs['gbest']
+        # else:
+        #     self.gbest = Particle()
+        #
+        # # Set population of particles if passed
+        # if 'pop' in kwargs:
+        #     self.population = kwargs['pop']
+        # else:
+        #     self.population = []
 
-        # Set global best single particle if passed
-        if 'gbest' in kwargs:
-            self.gbest = kwargs['gbest']
-        else:
-            self.gbest = Particle()
-
-        # Set population of particles if passed
-        if 'pop' in kwargs:
-            self.population = kwargs['pop']
-        else:
-            self.population = []
+        if self.hj.initial_sample:
+            self.hj.pid_cls.initial_sample = self.hj.pid_cls.generate_initial_sample()
 
     def post_processing(self):
-        lg.msg(logging.DEBUG, 'Computational budget remaining is {}'.format(self.budget))
+        lg.msg(logging.DEBUG, 'Computational budget remaining is {}'.format(self.hj.budget))
 

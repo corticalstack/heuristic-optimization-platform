@@ -13,7 +13,11 @@
             enabled: False
         taillard_100_10_i1.txt:
             enabled: False
+    lb: 0
+    ub: nmax
   RASTRIGIN:
-    enabled: False
+    enabled: True
     generator: continuous
     description: Rastrigin
+    lb: -5.12
+    ub: 5.12

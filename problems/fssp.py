@@ -25,11 +25,14 @@ class FSSP(Problem):
         self.n = self.jobs['quantity']
 
         # Set computational budget scaled to problem instance dimensions
-        self.set_budget()
+        #self.set_budget()
 
-        self.jobs_set_total_units()
-        self.machines_set_loadout_times()
-        self.machines_set_lower_bounds_taillard()
+        #self.jobs_set_total_units()
+        #self.machines_set_loadout_times()
+        #self.machines_set_lower_bounds_taillard()
+
+    def pre_processing(self):
+        pass
 
     def post_processing(self, **kwargs):
         bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
@@ -47,7 +50,7 @@ class FSSP(Problem):
         self.jobs_times(bcp)
 
     def load_instance(self):
-        filename = 'benchmarks/fssp/' + self.iid
+        filename = 'benchmarks/fssp/' + self.hj.bid
         with open(filename, 'r') as f:
             line = f.readlines()
             for i, job_detail in enumerate(line):

@@ -6,24 +6,32 @@
     type: low
     optimizer: RND
     initial_sample: False
+    lb: null
+    ub: null
   SHC:
     enabled: False
     description: Stochastic Hill Climbing
     type: low
     optimizer: SHC
     initial_sample: False
+    lb: null
+    ub: null
   SA:
     enabled: True
     description: Simulated Annealing
     type: low
     optimizer: SA
     initial_sample: True
+    lb: null
+    ub: null
   DE:
     enabled: False
     description: Differential Evolution
     type: low
     optimizer: DEA
     initial_sample: False
+    lb: null
+    ub: null
   ES:
     enabled: False
     description: Evoluation Strategy
@@ -31,19 +39,25 @@
     optimizer: ES
     generator: continuous
     initial_sample: False
+    lb: null
+    ub: null
   GA:
-    enabled: False
+    enabled: True
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
     initial_sample: False
+    lb: null
+    ub: null
   PSO:
-    enabled: False
+    enabled: True
     description: Particle swarm
     type: low
     optimizer: PSO
     generator: continuous
     initial_sample: False
+    lb: 0
+    ub: 4
   GA-HH:
     enabled: False
     description: Hyper heuristics

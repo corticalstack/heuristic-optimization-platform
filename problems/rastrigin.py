@@ -25,9 +25,10 @@ class RASTRIGIN(Problem):
         pass
 
     def set_budget(self):
+        pass
         # Base budget * problem dimensions
-        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
-        self.budget['remaining'] = self.budget['total']
+        #self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
+        #self.budget['remaining'] = self.budget['total']
 
     def evaluator(self, candidate, budget=1):
         budget -= 1  # Evaluating has a computational cost so reduce budget
