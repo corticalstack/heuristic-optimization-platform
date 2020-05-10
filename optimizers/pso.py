@@ -46,7 +46,8 @@ class PSO(Optimizer):
             c = Particle()
             
             # Generate candidate of cont values within domain bounds
-            c.candidate_cont = getattr(self.problem, 'generator_' + generator)(self.problem.n, self.pos_min, self.pos_max)
+            samples = self.problem.n ** 2
+            c.candidate_cont = getattr(self.problem, 'generator_' + generator)(n=samples, lb=self.pos_min, ub=self.pos_max)
             
             # Transform candidate of cont values back to discrete job id's using smallest position value method
             c.candidate = self.problem.candidate_spv_continuous_to_discrete(c.candidate_cont)

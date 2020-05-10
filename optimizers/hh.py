@@ -1,6 +1,7 @@
 from optimizers.hyper import Hyper
 import copy
 
+
 class HH(Hyper):
     def __init__(self, **kwargs):
         Hyper.__init__(self, **kwargs)

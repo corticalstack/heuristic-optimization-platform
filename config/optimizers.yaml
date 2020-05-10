@@ -5,28 +5,24 @@
     description: Random
     type: low
     optimizer: RND
-    generator: discrete
     initial_sample: False
   SHC:
     enabled: False
     description: Stochastic Hill Climbing
     type: low
     optimizer: SHC
-    generator: discrete
     initial_sample: False
   SA:
-    enabled: False
+    enabled: True
     description: Simulated Annealing
     type: low
     optimizer: SA
-    generator: discrete
     initial_sample: True
   DE:
     enabled: False
     description: Differential Evolution
     type: low
     optimizer: DEA
-    generator: discrete
     initial_sample: False
   ES:
     enabled: False
@@ -40,7 +36,6 @@
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
-    generator: discrete
     initial_sample: False
   PSO:
     enabled: False
@@ -50,12 +45,13 @@
     generator: continuous
     initial_sample: False
   GA-HH:
-    enabled: True
+    enabled: False
     description: Hyper heuristics
     type: hyper
     optimizer: HH
-    low_level_components:
-        - GA
+    low_level_selection_pool:
         - PSO
-    generator: continuous
-    initial_sample: False
+        - GA
+    low_level_budget_base: 100
+    low_level_sample_runs: 3
+

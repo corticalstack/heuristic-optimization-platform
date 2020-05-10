@@ -7,8 +7,7 @@ class Config:
         self.files = {
             'gen': 'config/general.yaml',
             'prb': 'config/problems.yaml',
-            'opt': 'config/optimizers.yaml',
-            'ben': 'config/benchmarks.yaml'
+            'opt': 'config/optimizers.yaml'
         }
 
         self.get_config()

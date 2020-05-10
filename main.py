@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 import copy
 from problems.fssp import *
+from problems.rastrigin import *
 from optimizers.rnd import RND
 from optimizers.shc import SHC
 from optimizers.es import ES
@@ -45,19 +46,20 @@ class HeuristicOptimizerPlatform:
                     continue
                 lg.msg(logging.INFO, 'Processing {}'.format(self.cfg.settings['prb'][pid]['description']))
 
-                # For the given problem, optimize each of the associated benchmark problems
-                for iid in self.cfg.settings['ben'][pid]['instances']:
-                    if not self.cfg.settings['ben'][pid]['instances'][iid]['enabled']:
+                # Optimize the given problem with enabled optimizers
+                for oid in self.cfg.settings['opt']:
+                    if not self.cfg.settings['opt'][oid]['enabled']:
                         continue
-                    lg.msg(logging.INFO, 'Optimizing {} benchmark problem instance {}'.format(
-                        self.cfg.settings['ben'][pid]['type'], iid))
 
-                    # Optimize the given benchmark problem with enabled optimizers
-                    for oid in self.cfg.settings['opt']:
-                        if not self.cfg.settings['opt'][oid]['enabled']:
-                            continue
-
-                        self.optimize_problem_benchmark_instance(pid, iid, oid)
+                    if 'benchmarks' not in self.cfg.settings['prb'][pid]:
+                        self.optimize_problem(random=self.random, cfg=self.cfg, pid=pid, oid=oid)
+                    else:
+                        # For the given problem, optimize each of the associated benchmark problems
+                        for iid in self.cfg.settings['prb'][pid]['benchmarks']:
+                            if not self.cfg.settings['prb'][pid]['benchmarks'][iid]['enabled']:
+                                continue
+                            lg.msg(logging.INFO, 'Optimizing benchmark problem instance {}'.format(iid))
+                            self.optimize_problem(random=self.random, cfg=self.cfg, pid=pid, iid=iid, oid=oid)
 
                 # Summarise results as optimization has completed
                 self.summary()
@@ -67,10 +69,8 @@ class HeuristicOptimizerPlatform:
 
         lg.msg(logging.INFO, 'Flow shop scheduling problem completed')
 
-    def optimize_problem_benchmark_instance(self, pid, iid, oid):
-        lg.msg(logging.INFO, 'Optimizing problem benchmark with optimizer {}'.format(oid))
-
-        problem, optimizer = self.make_components(pid=pid, iid=iid, oid=oid)
+    def optimize_problem(self, **kwargs):
+        problem, optimizer = self.make_components(**kwargs)
 
         # Execute optimizer configured number of times to sample problem results
         lg.msg(logging.INFO, 'Executing {} sample runs'.format(self.cfg.settings['gen']['runs_per_optimizer']))
@@ -85,15 +85,15 @@ class HeuristicOptimizerPlatform:
             total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
 
             lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.candidate))
-            self.log_optimizer_fitness(oid=oid, bcf=run_best.fitness, bcp=run_best.candidate)
+            self.log_optimizer_fitness(oid=kwargs['oid'], bcf=run_best.fitness, bcp=run_best.candidate)
 
             self.vis.fitness_trend(run_ft)  # Plot run-specific trend
 
         # Log optimizer average completion time seconds
-        self.cfg.settings['opt'][oid]['avg_cts'] = total_cts / self.cfg.settings['gen']['runs_per_optimizer']
+        self.cfg.settings['opt'][kwargs['oid']]['avg_cts'] = total_cts / self.cfg.settings['gen']['runs_per_optimizer']
 
         # Execute problem-specific tasks upon optimization completion, for e.g. generate gantt chart of best schedule
-        problem.post_processing(oid=oid)
+        problem.post_processing(oid=kwargs['oid'])
 
     def load_components(self):
         pass
@@ -103,11 +103,11 @@ class HeuristicOptimizerPlatform:
     def make_components(self, **kwargs):
         # Get class for problem and instantiate
         cls = globals()[kwargs['pid']]
-        problem = cls(random=self.random, cfg=self.cfg, oid=kwargs['oid'], iid=kwargs['iid'])
+        problem = cls(**kwargs)
 
         # Get class for optimizer and instantiate
         cls = globals()[self.cfg.settings['opt'][kwargs['oid']]['optimizer']]
-        optimizer = cls(random=self.random, cfg=self.cfg, problem=problem)
+        optimizer = cls(problem=problem, **kwargs)
 
         return problem, optimizer
 

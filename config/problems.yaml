@@ -2,7 +2,18 @@
 
   FSSP:
     enabled: True
+    generator: discrete
     description: Flow Shop Scheduling Problem
-  tsp:
+    benchmarks:
+        taillard_20_5_i1.txt:
+            enabled: False
+        taillard_20_10_i1.txt:
+            enabled: True
+        taillard_50_10_i1.txt:
+            enabled: False
+        taillard_100_10_i1.txt:
+            enabled: False
+  RASTRIGIN:
     enabled: False
-    description: Travelling Salesman Problem
+    generator: continuous
+    description: Rastrigin

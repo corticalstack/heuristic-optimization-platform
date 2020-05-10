@@ -31,14 +31,18 @@ class SA(Optimizer):
             self.initial_temp_cost = 0
 
     def anneal(self):
+        generator = getattr(self.problem, 'generator_' + self.problem.get_generator(self.__class__.__name__))
         if self.gbest.fitness == self.gbest.fitness_default:
-            self.gbest.candidate = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['SA']['generator'])(self.problem.n)
+            self.gbest.candidate = generator(lb=self.problem.pos_min, ub=self.problem.pos_max)
             self.gbest.fitness, self.budget = self.problem.evaluator(self.gbest.candidate, self.budget)
         self.temp = self.initial_temp
-
+        self.temp = 100
         while self.budget > 0 and (self.temp > self.temp_threshold):
             new = Particle()
-            new.candidate = self.n_swap(self.gbest.candidate)
+            if len(self.gbest.candidate) == 1:
+                new.candidate = generator(lb=self.problem.pos_min, ub=self.problem.pos_max)
+            else:
+                new.candidate = self.n_swap(self.gbest.candidate)
 
             new.fitness, self.budget = self.problem.evaluator(new.candidate, self.budget)
             loss = self.gbest.fitness - new.fitness

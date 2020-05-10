@@ -12,9 +12,6 @@ class FSSP(Problem):
     """
     def __init__(self, **kwargs):
         Problem.__init__(self, **kwargs)
-        self.cfg = kwargs['cfg']
-        self.oid = kwargs['oid']
-        self.iid = kwargs['iid']
 
         self.jobs = {'quantity': 0, 'list': [], 'total_units': []}
         self.machines = {'quantity': 0, 'loadout_times': [], 'lower_bounds_taillard': [], 'assigned_jobs': []}
@@ -66,14 +63,6 @@ class FSSP(Problem):
         # Base budget * problem dimensions
         self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
         self.budget['remaining'] = self.budget['total']
-
-    def generate_initial_sample(self, oid):
-        sample = []
-        num = int(math.pow(self.jobs['quantity'], 2))
-        for i in range(num):
-            sample.append(getattr(self, 'generator_' + self.cfg.settings['opt'][oid]['generator'])(self.n))
-
-        return sample
 
     def evaluator(self, candidate, budget=1):
         self.machines['assigned_jobs'] = []

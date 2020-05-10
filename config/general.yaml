@@ -1,4 +1,4 @@
 # General configuration
 
-  runs_per_optimizer: 5
+  runs_per_optimizer: 3
   comp_budget_base: 8000
