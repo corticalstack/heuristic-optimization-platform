@@ -1,5 +1,6 @@
 from random import Random
 from utilities.visualisation import Visualisation
+from optimizers.particle import Particle
 from config.config import *
 import os
 import sys
@@ -35,12 +36,8 @@ class Controller:
         self.random.seed(42)
         self.vis = Visualisation()
         self.settings = self.get_config()
+        self.problems_optimizers = []
         self.jobs = self.set_jobs()
-
-        # Add runtime stats template to each optimizer
-        #self.opt_runtime_stats = {'bcf': 999999999, 'bcp': [], 'lb_diff_pct': 0, 'ub_diff_pct': 0, 'avg_cts': 0,
-        #                          'ft': []}
-        #self.add_opt_runtime_stats()
 
     @staticmethod
     def get_config():
@@ -63,9 +60,10 @@ class Controller:
         jobs = []
         prob = self.get_enabled_problems()
         opt = self.get_enabled_optimizers()
-        prob_opt = list(product(prob, opt))
+        self.problems_optimizers = list(product(prob, opt))
+        self.problems_optimizers.sort()
 
-        for (pid, oid) in prob_opt:
+        for (pid, oid) in self.problems_optimizers:
             benchmarks = []
             if 'benchmarks' not in self.settings['prb'][pid]:
                 benchmarks.append('n/a')
@@ -75,10 +73,10 @@ class Controller:
                         continue
                     benchmarks.append(bid)
             for bid in benchmarks:
-                jobs.append(self.add_job(pid, oid, bid))
+                jobs.append(self.create_job_spec(pid, oid, bid))
         return jobs
 
-    def add_job(self, *args):
+    def create_job_spec(self, *args):
         job = HopJob()
         job.pid, job.oid, job.bid = args
         job.comp_budget_base = self.settings['gen']['comp_budget_base']
@@ -90,8 +88,6 @@ class Controller:
         cls = globals()[job.pid]
         job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
-        cls = globals()[job.oid]
-        job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
         job.pid_lb = self.settings['prb'][job.pid]['lb']
         if self.settings['prb'][job.pid]['ub'] == 'nmax':
@@ -101,6 +97,8 @@ class Controller:
 
         job.oid_lb = self.settings['opt'][job.oid]['lb']
         job.oid_ub = self.settings['opt'][job.oid]['ub']
+        cls = globals()[self.settings['opt'][job.oid]['optimizer']]
+        job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
         # Optimizer configured generator overrides higher level problem generator e.g. PSO works on continuous values
         if 'generator' in self.settings['opt'][job.oid]:
@@ -135,13 +133,43 @@ class Controller:
 
             for r in range(j.runs_per_optimizer):
                 exec_start_time = time.time()
+                self.pre_processing(j)
                 j.oid_cls.run()
                 j.end_time = time.time()
-                j.comp_time_s += time.time() - exec_start_time
+                j.total_comp_time_s += time.time() - exec_start_time
 
-                lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(r, j.gbest.fitness, j.gbest.candidate))
-                self.vis.fitness_trend(j.fitness_trend)  # Plot run-specific trend
+                lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(r, j.rbest.fitness, j.rbest.candidate))
+                self.log_optimizer_fitness(j)
+
+                self.vis.fitness_trend(j.rft)  # Plot run-specific trend
+
             j.end_time = time.time()
+            j.avg_comp_time_s = j.total_comp_time_s / j.runs_per_optimizer
+
+            # Execute problem-specific tasks upon optimization completion e.g. generate Gantt chart of best schedule
+            j.pid_cls.post_processing()
+
+        self.summary()
+
+    def pre_processing(self, j):
+        j.budget = j.pid_cls.n * j.comp_budget_base
+        j.rft = []
+
+        # Set global best single particle if passed
+        # if 'gbest' in kwargs:
+        #    self.gbest = kwargs['gbest']
+        # else:
+        j.rbest = Particle()
+
+        # Set population of particles if passed
+        # if 'pop' in kwargs:
+        #    self.population = kwargs['pop']
+        # else:
+        j.population = []
+
+
+        if j.initial_sample:
+            j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
 
     def optimize_problem(self, **kwargs):
         problem, optimizer = self.make_components(**kwargs)
@@ -161,7 +189,7 @@ class Controller:
             lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.candidate))
             self.log_optimizer_fitness(oid=kwargs['oid'], bcf=run_best.fitness, bcp=run_best.candidate)
 
-            self.vis.fitness_trend(run_ft)  # Plot run-specific trend
+            self.vis.ft(run_ft)  # Plot run-specific trend
 
         # Log optimizer average completion time seconds
         self.settings['opt'][kwargs['oid']]['avg_cts'] = total_cts / self.settings['gen']['runs_per_optimizer']
@@ -173,21 +201,28 @@ class Controller:
         pass
         # load components
 
-    def log_optimizer_fitness(self, **kwargs):
-        if kwargs['bcf'] < self.settings['opt'][kwargs['oid']]['bcf']:
-            self.settings['opt'][kwargs['oid']]['bcf'] = kwargs['bcf']
-            self.settings['opt'][kwargs['oid']]['bcp'] = kwargs['bcp']
+    def log_optimizer_fitness(self, j):
+        if j.rbest.fitness < j.gbest.fitness:
+            j.gbest = copy.deepcopy(j.rbest)
 
-        # Log best fitness for this run to see trend over execution runs
-        self.settings['opt'][kwargs['oid']]['ft'].append(kwargs['bcf'])
-
-    def add_opt_runtime_stats(self):
-        for oid in self.settings['opt']:
-            if not self.settings['opt'][oid]['enabled']:
-                continue
-            stats_template = copy.deepcopy(self.opt_runtime_stats)
-            self.settings['opt'][oid].update(stats_template)
+        j.gft.append(j.rbest.fitness)
 
     def summary(self):
-        self.vis.fitness_trend_all_optimizers(self.settings['opt'])
-        Stats.summary(self.settings['opt'])
+        lg.msg(logging.INFO, 'Basic Statistics')
+        # need to show all optimzier trends per problem
+        gft = {}
+        for j in self.jobs:
+            gft[j.pid] = {}
+            gft[j.pid][j.oid] = j.gft
+
+        for k, v in gft.items():
+            self.vis.fitness_trend_all_optimizers(v)
+            summary = Stats.get_summary(v)
+            # optimizers[k]['avg_cts'], 'lb_diff_pct': optimizers[opt]['lb_diff_pct'], 'ub_diff_pct':
+            # optimizers[opt]['ub_diff_pct']}
+            # lg.msg(logging.INFO,
+            #        'Optimiser\tMin Fitness\tMax Fitness\tAvg Fitness\tStDev\tWilcoxon\tLB Diff %\tUB Diff %\tAvg Cts')
+            # for k, v in summary_results.items():
+            #     lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}\t\t{}\t{}\t\t{}\t\t{}\t\t{}'.format(
+            #         str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
+            #         str(v['lb_diff_pct']), str(v['ub_diff_pct']), str(round(v['avg_cts'], 3))))

@@ -3,7 +3,7 @@ from optimizers.particle import Particle
 import logging
 from utilities import logger as lg
 import math
-import numpy as np
+import copy
 
 
 class SA(Optimizer):
@@ -17,14 +17,12 @@ class SA(Optimizer):
 
         self.initial_temp = 0
         self.initial_temp_cost = 0
-        self.initial_temp_weight = 0.035
-
 
         self.cooling_rate = 0.99
         lg.msg(logging.DEBUG, 'Cooling rate set to {}'.format(self.cooling_rate))
 
     def optimize(self):
-        self.initial_temp = self.set_initial_temp()  # JP juist a thought - set initial temp as tghe spread - (max - min)
+        self.initial_temp = self.set_initial_temp()
         lg.msg(logging.DEBUG, 'Initial temperature set to {}'.format(self.initial_temp))
         self.anneal()
         # Evaluating initial temperature has a one-time computational cost, so reduce budget if required
@@ -33,31 +31,31 @@ class SA(Optimizer):
             self.initial_temp_cost = 0
 
     def anneal(self):
-        if self.hj.gbest.fitness == self.hj.gbest.fitness_default:
-            self.hj.gbest.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_lb)
-            self.hj.gbest.fitness, self.hj.budget = self.hj.pid_cls.evaluator(self.hj.gbest.candidate, self.hj.budget)
+        # Set initial solution candidate
+        if self.hj.rbest.fitness == self.hj.rbest.fitness_default:
+            self.hj.rbest.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_lb)
+            self.hj.rbest.fitness, self.hj.budget = self.hj.pid_cls.evaluator(self.hj.rbest.candidate, self.hj.budget)
+
         self.temp = self.initial_temp
-        self.temp = 100
+
         while self.hj.budget > 0 and (self.temp > self.temp_threshold):
             new = Particle()
-            if len(self.hj.gbest.candidate) == 1:
+
+            # If continuous problem generate new solution otherwise perturb current candidate combination
+            if len(self.hj.rbest.candidate) == 1:
                 new.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_lb)
             else:
-                new.candidate = self.n_swap(self.hj.gbest.candidate)
+                new.candidate = self.n_swap(self.hj.rbest.candidate)
 
             new.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new.candidate, self.hj.budget)
-            loss = self.hj.gbest.fitness - new.fitness
+            loss = self.hj.rbest.fitness - new.fitness
             probability = math.exp(loss / self.temp)
 
-            rr = self.random.random()
-            if (new.fitness < self.hj.gbest.fitness) or (rr < probability):
-                lg.msg(logging.DEBUG, 'Previous best {} replaced by new best {}'.format(self.hj.gbest.fitness,
+            if (new.fitness < self.hj.rbest.fitness) or (self.random.random() < probability):
+                lg.msg(logging.DEBUG, 'Previous best {} replaced by new best {}'.format(self.hj.rbest.fitness,
                                                                                         new.fitness))
-                if rr < probability:
-                    lg.msg(logging.DEBUG, 'Random {} less than probability {}'.format(rr, probability))
-                self.hj.gbest.fitness = new.fitness
-                self.hj.gbest.candidate = new.candidate
-                self.hj.fitness_trend.append(self.hj.gbest.fitness)
+                self.hj.rbest = copy.deepcopy(new)
+                self.hj.rft.append(self.hj.rbest.fitness)
 
             self.temp *= self.cooling_rate
 
@@ -69,6 +67,6 @@ class SA(Optimizer):
             fitness, self.initial_temp_cost = self.hj.pid_cls.evaluator(candidate, self.initial_temp_cost)
             candidates.append(fitness)
 
-        it = int(np.mean(candidates)) * self.initial_temp_weight
-        lg.msg(logging.INFO, 'Initial temperature set to {}'.format(it))
+        # Initial temperature set to temperature spread of sample
+        it = int(max(candidates) - min(candidates))
         return it

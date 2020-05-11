@@ -9,6 +9,8 @@ class HopJob:
         self.pid_lb = 0
         self.pid_ub = 0
         self.oid = None
+        self.pid_lb_diff_pct = 0
+        self.pid_ub_diff_pct = 0
         self.oid_cls = None
         self.oid_lb = 0
         self.oid_ub = 0
@@ -19,13 +21,15 @@ class HopJob:
         self.initial_sample = False
         self.sample_size_factor = 100  # Usually multiples n dimensions to determine sample size
         self.generator = None
+        self.rbest = Particle()
         self.gbest = Particle()
+        self.rft = []
+        self.gft = []
         self.population = []
         self.start_time = 0
         self.end_time = 0
-        self.comp_time_s = 0
-        self.fitness_trend = []
-        self.gbest_fitness_trend = []
+        self.total_comp_time_s = 0
+        self.avg_comp_time_s = 0
 
 
 

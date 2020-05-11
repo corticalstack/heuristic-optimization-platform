@@ -16,7 +16,7 @@
     lb: 0
     ub: nmax
   RASTRIGIN:
-    enabled: True
+    enabled: False
     generator: continuous
     description: Rastrigin
     lb: -5.12

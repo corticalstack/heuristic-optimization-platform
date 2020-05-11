@@ -34,20 +34,19 @@ class FSSP(Problem):
     def pre_processing(self):
         pass
 
-    def post_processing(self, **kwargs):
-        bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
+    def post_processing(self):
+        #bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
 
-        self.cfg.settings['opt'][kwargs['oid']]['lb_diff_pct'], self.cfg.settings['opt'][kwargs['oid']]['ub_diff_pct'] \
-            = Stats.taillard_compare(self.ilb, self.iub, self.cfg.settings['opt'][kwargs['oid']]['bcf'])
+        self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.taillard_compare(self.ilb, self.iub, self.hj.gbest.fitness)
 
-        fitness, _ = self.evaluator(bcp)  # set machine assigned jobs to best permutation
+        fitness, _ = self.evaluator(self.hj.gbest.candidate)  # set machine assigned jobs to best permutation
         self.vis.solution_representation_gantt(fitness, self.machines, self.jobs)
 
         lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
-        self.machines_times(bcp)
+        self.machines_times(self.hj.gbest.candidate)
 
-        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, bcp))
-        self.jobs_times(bcp)
+        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, self.hj.gbest.candidate))
+        self.jobs_times(self.hj.gbest.candidate)
 
     def load_instance(self):
         filename = 'benchmarks/fssp/' + self.hj.bid

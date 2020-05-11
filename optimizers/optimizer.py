@@ -39,22 +39,24 @@ class Optimizer:
         pass
 
     def pre_processing(self):
-        # self.fitness_trend = []
+        # self.hj.fitness_trend = []
         #
         # # Set global best single particle if passed
-        # if 'gbest' in kwargs:
-        #     self.gbest = kwargs['gbest']
-        # else:
-        #     self.gbest = Particle()
+        # #if 'gbest' in kwargs:
+        # #    self.gbest = kwargs['gbest']
+        # #else:
+        # self.hj.gbest = Particle()
         #
         # # Set population of particles if passed
-        # if 'pop' in kwargs:
-        #     self.population = kwargs['pop']
-        # else:
-        #     self.population = []
+        # #if 'pop' in kwargs:
+        # #    self.population = kwargs['pop']
+        # #else:
+        # self.hj.population = []
+        #
+        # if self.hj.initial_sample:
+        #     self.hj.pid_cls.initial_sample = self.hj.pid_cls.generate_initial_sample()
 
-        if self.hj.initial_sample:
-            self.hj.pid_cls.initial_sample = self.hj.pid_cls.generate_initial_sample()
+        pass
 
     def post_processing(self):
         lg.msg(logging.DEBUG, 'Computational budget remaining is {}'.format(self.hj.budget))

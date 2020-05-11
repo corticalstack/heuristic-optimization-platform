@@ -20,35 +20,34 @@ class GA(Optimizer):
         self.number_children = 5
         lg.msg(logging.DEBUG, 'Number of children set to {}'.format(self.number_children))
 
-        self.population = []
-
     def optimize(self):
         self.evolve()
 
     def evolve(self):
-        self.initial_candidate_size = self.problem.n * 2
-
+        self.initial_candidate_size = self.hj.pid_cls.n * 2
         lg.msg(logging.DEBUG, 'Initial candidate size set to {}'.format(self.initial_candidate_size))
 
         for i in range(self.initial_candidate_size):
             candidate = Particle()
-            candidate.candidate = getattr(self.problem, 'generator_' + self.cfg.settings['opt']['GA']['generator'])(self.problem.n)
-            self.population.append(candidate)
+            candidate.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
+            self.hj.population.append(candidate)
 
-        while self.budget > 0:
-            for ci, candidate in enumerate(self.population):
+        while self.hj.budget > 0:
+
+            # Evaluate any new candidates
+            for ci, candidate in enumerate(self.hj.population):
                 if candidate.fitness == candidate.fitness_default:
-                    candidate.fitness, self.budget = self.problem.evaluator(candidate.candidate, self.budget)
+                    candidate.fitness, self.hj.budget = self.hj.pid_cls.evaluator(candidate.candidate, self.hj.budget)
 
             # Sort population by fitness ascending
-            self.population.sort(key=lambda x: x.fitness, reverse=False)
+            self.hj.population.sort(key=lambda x: x.fitness, reverse=False)
 
-            if self.population[0].fitness < self.gbest.fitness:
+            if self.hj.population[0].fitness < self.hj.rbest.fitness:
                 lg.msg(logging.DEBUG, 'Previous best is {}, now updated with new best {}'.format(
-                    self.gbest.fitness, self.population[0].fitness))
-                self.gbest.fitness = self.population[0].fitness
-                self.gbest.candidate = self.population[0].candidate
-                self.fitness_trend.append(self.population[0].fitness)
+                    self.hj.gbest.fitness, self.hj.population[0].fitness))
+                self.hj.rbest.fitness = self.hj.population[0].fitness
+                self.hj.rbest.candidate = self.hj.population[0].candidate
+                self.hj.rft.append(self.hj.population[0].fitness)
 
             self.parents = self.parent_selection()
 
@@ -56,14 +55,14 @@ class GA(Optimizer):
 
             self.children_mutate()
 
-            self.population = self.update_population()
+            self.hj.population = self.update_population()
 
     def update_population(self):
         new_pop = []
         for p in self.parents:
             particle = Particle()
-            particle.fitness = self.population[p].fitness
-            particle.candidate = self.population[p].candidate
+            particle.fitness = self.hj.population[p].fitness
+            particle.candidate = self.hj.population[p].candidate
             new_pop.append(particle)
 
         # Add children to population
@@ -77,11 +76,11 @@ class GA(Optimizer):
     def parent_selection(self):
         # Fitness proportionate selection (FPS), assigning probabilities to individuals acting as parents depending on their
         # fitness
-        max_fitness = sum([particle.fitness for particle in self.population])
-        #fitness_proportionate = [particle.fitness / max_fitness for particle in self.population]  # Foor maximisation where higher fitness is better
+        max_fitness = sum([particle.fitness for particle in self.hj.population])
+        #fitness_proportionate = [particle.fitness / max_fitness for particle in self.hj.population]  # Foor maximisation where higher fitness is better
 
         # Fitness proportionate where smaller fitness is better
-        fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.population) - 1) for particle in self.population]
+        fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.hj.population) - 1) for particle in self.hj.population]
 
         pointer_distance = 1 / self.number_parents
         start_point = self.random.uniform(0, pointer_distance)
@@ -109,9 +108,9 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.number_children):
-            crossover_point = self.random.randint(1, self.problem.n - 1)
-            child = self.population[self.parents[0]].candidate[:crossover_point]
-            for c in self.population[self.parents[1]].candidate:
+            crossover_point = self.random.randint(1, self.hj.pid_cls.n - 1)
+            child = self.hj.population[self.parents[0]].candidate[:crossover_point]
+            for c in self.hj.population[self.parents[1]].candidate:
                 if c not in child:
                     child.append(c)
             children.append(child)
@@ -125,6 +124,6 @@ class GA(Optimizer):
         # Swap positions of the 2 job tasks in the candidate
         for i in range(self.number_children):
             # Generate 2 task numbers at random, within range
-            tasks = self.random.sample(range(0, self.problem.n), 2)
+            tasks = self.random.sample(range(0, self.hj.pid_cls.n), 2)
             self.children[i][tasks[0]], self.children[i][tasks[1]] = \
                 self.children[i][tasks[1]], self.children[i][tasks[0]]

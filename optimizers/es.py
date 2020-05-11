@@ -11,12 +11,8 @@ class ES(Optimizer):
         self.initial_candidate_size = 30
         lg.msg(logging.DEBUG, 'Population size to {}'.format(self.initial_candidate_size))
 
-        self.pos_min = 0
-        self.pos_max = 4
-
     def optimize(self):
         self.evolve()
-        return self.gbest.fitness, self.gbest.candidate, self.fitness_trend
 
     def evolve(self):
         es = inspyred.ec.ES(self.random)
@@ -28,15 +24,13 @@ class ES(Optimizer):
                               evaluator=InspyredWrapper.evaluator,
                               pop_size=self.initial_candidate_size,
                               maximize=False,
-                              max_evaluations=self.budget,
-                              slf=self,
-                              problem=self.problem,
-                              cfg=self.cfg)
+                              max_evaluations=self.hj.budget,
+                              slf=self)
 
         final_pop.sort(reverse=True)
-        self.gbest.fitness = final_pop[0].fitness
+        self.hj.rbest.fitness = final_pop[0].fitness = final_pop[0].fitness
 
         # Inspyred ES extends candidate with strategy elements, slice for actual solution cand. associated with fitness
-        self.gbest.candidate = self.problem.candidate_spv_continuous_to_discrete(final_pop[0].candidate[:self.problem.n])
-        self.fitness_trend = list(set(self.fitness_trend))  # Remove duplicates
-        self.fitness_trend.sort(reverse=True)
+        self.hj.rbest.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(final_pop[0].candidate[:self.hj.pid_cls.n])
+        self.hj.rft = list(set(self.hj.rft))  # Remove duplicates
+        self.hj.rft.sort(reverse=True)

@@ -19,11 +19,10 @@ class Visualisation:
         plt.show()
 
     @staticmethod
-    def fitness_trend_all_optimizers(optimizers):
+    def fitness_trend_all_optimizers(trends):
         df_ft = pd.DataFrame()
-        for opt in optimizers:
-            if optimizers[opt]['enabled']:
-                df_ft[opt] = optimizers[opt]['ft']
+        for k, v, in trends.items():
+            df_ft[k] = v
 
         if not df_ft.empty:
             g = sns.relplot(kind="line", data=df_ft, dashes=False)
