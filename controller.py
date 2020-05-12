@@ -10,8 +10,6 @@ import copy
 
 from problems.fssp import *
 from problems.rastrigin import *
-from optimizers.rnd import RND
-from optimizers.shc import SHC
 from optimizers.es import ES
 from optimizers.dea import DEA
 from optimizers.sa import SA
@@ -79,8 +77,10 @@ class Controller:
     def create_job_spec(self, *args):
         job = HopJob()
         job.pid, job.oid, job.bid = args
+        job.type = self.settings['prb'][job.pid]['type']
         job.comp_budget_base = self.settings['gen']['comp_budget_base']
         job.runs_per_optimizer = self.settings['gen']['runs_per_optimizer']
+        job.bit_computing = self.settings['gen']['bit_computing']
 
         if 'initial_sample' in self.settings['opt'][job.oid]:
             job.initial_sample = self.settings['opt'][job.oid]['initial_sample']
@@ -88,6 +88,16 @@ class Controller:
         cls = globals()[job.pid]
         job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
+        if job.type == 'combinatorial':
+            job.initial_candidate_size = job.pid_cls.n * 2
+        else:
+            job.initial_candidate_size = 5
+
+        if 'number_parents' in self.settings['opt'][job.oid]:
+            job.number_parents = self.settings['opt'][job.oid]['number_parents']
+
+        if 'number_children' in self.settings['opt'][job.oid]:
+            job.number_children = self.settings['opt'][job.oid]['number_children']
 
         job.pid_lb = self.settings['prb'][job.pid]['lb']
         if self.settings['prb'][job.pid]['ub'] == 'nmax':
@@ -138,7 +148,10 @@ class Controller:
                 j.end_time = time.time()
                 j.total_comp_time_s += time.time() - exec_start_time
 
-                lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(r, j.rbest.fitness, j.rbest.candidate))
+                if isinstance(j.rbest.candidate[0], float) and j.type == 'combinatorial':
+                    j.rbest.candidate = j.pid_cls.candidate_spv_continuous_to_discrete(j.rbest.candidate)
+
+                lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(r, "{:.10f}".format(j.rbest.fitness), j.rbest.candidate))
                 self.log_optimizer_fitness(j)
 
                 self.vis.fitness_trend(j.rft)  # Plot run-specific trend

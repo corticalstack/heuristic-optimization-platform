@@ -14,9 +14,7 @@ class RASTRIGIN(Problem):
         Problem.__init__(self, **kwargs)
 
         # Set n dimensions
-        self.n = 1
-        self.pos_min = -5.12
-        self.pos_max = 5.12
+        self.n = 2
 
         # Set computational budget scaled to problem instance dimensions
         self.set_budget()
@@ -31,5 +29,6 @@ class RASTRIGIN(Problem):
         #self.budget['remaining'] = self.budget['total']
 
     def evaluator(self, candidate, budget=1):
-        budget -= 1  # Evaluating has a computational cost so reduce budget
-        return sum([x ** 2 - 10 * math.cos(2 * math.pi * x) + 10 for x in candidate]), budget
+        fitness = []
+        budget -=1
+        return sum([x**2 - 10 * math.cos(2 * math.pi * x) + 10 for x in candidate]), budget

@@ -1,7 +1,8 @@
 # Problem configuration
 
   FSSP:
-    enabled: True
+    enabled: False
+    type: combinatorial
     generator: discrete
     description: Flow Shop Scheduling Problem
     benchmarks:
@@ -16,7 +17,8 @@
     lb: 0
     ub: nmax
   RASTRIGIN:
-    enabled: False
+    enabled: True
+    type: continuous
     generator: continuous
     description: Rastrigin
     lb: -5.12

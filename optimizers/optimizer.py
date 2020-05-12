@@ -1,6 +1,6 @@
 import logging
 from utilities import logger as lg
-
+import struct
 from optimizers.particle import Particle
 import copy
 
@@ -17,6 +17,14 @@ class Optimizer:
         self.optimize()
         self.post_processing()
 
+    def binary_to_float(self, binary):
+        # Transform bit string to float
+        float_val = float(int(''.join([str(i) for i in binary]), 2))
+
+        # Rescale float within lower and upper bounds of
+        float_val = float_val / (2 ** self.hj.bit_computing - 1) * (self.hj.pid_ub - self.hj.pid_lb) + self.hj.pid_lb
+        return float_val
+
     def n_swap(self, candidate):
         # This does a local search by swapping two random jobs
         new_candidate = candidate.copy()
@@ -29,14 +37,30 @@ class Optimizer:
     def n_insert(self):
         pass
 
-    def n_exchange(self):
-        pass
+    def n_exchange(self, candidate):
+        """
+        Exchange job positions and i and j
+        """
+        ops = self.random.sample(range(0, len(candidate)), 2)
+        candidate[ops[0]], candidate[ops[1]] = candidate[ops[1]], candidate[ops[0]]
+        return candidate
 
     def n_shift(self):
         pass
 
     def n_sbox(self):
         pass
+
+    def crossover(self, parent0, parent1):
+        crossover_point = self.random.randint(1, (len(parent0) - 1))
+        if self.hj.type == 'combinatorial':
+            child = parent0[:crossover_point]
+            for c in parent1:
+                if c not in child:
+                    child.append(c)
+        else:
+            child = parent0[:crossover_point] + parent1[crossover_point:]
+        return child
 
     def pre_processing(self):
         # self.hj.fitness_trend = []

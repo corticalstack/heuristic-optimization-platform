@@ -1,21 +1,5 @@
 # Optimizers configuration
 
-  RND:
-    enabled: False
-    description: Random
-    type: low
-    optimizer: RND
-    initial_sample: False
-    lb: null
-    ub: null
-  SHC:
-    enabled: False
-    description: Stochastic Hill Climbing
-    type: low
-    optimizer: SHC
-    initial_sample: False
-    lb: null
-    ub: null
   SA:
     enabled: False
     description: Simulated Annealing
@@ -33,8 +17,8 @@
     lb: 0
     ub: 4
   ES:
-    enabled: True
-    description: Evoluation Strategy
+    enabled: False
+    description: Evoluation Strategy (Inspyred)
     type: low
     optimizer: ES
     generator: continuous
@@ -46,11 +30,14 @@
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
+    generator: chromosome
     initial_sample: False
     lb: null
     ub: null
+    number_parents: 3
+    number_children: 5
   PSO:
-    enabled: False
+    enabled: True
     description: Particle swarm
     type: low
     optimizer: PSO

@@ -14,20 +14,11 @@ class GA(Optimizer):
         self.parents = []
         self.children = []
 
-        self.number_parents = 3
-        lg.msg(logging.DEBUG, 'Number of parents set to {}'.format(self.number_parents))
-
-        self.number_children = 5
-        lg.msg(logging.DEBUG, 'Number of children set to {}'.format(self.number_children))
-
     def optimize(self):
         self.evolve()
 
     def evolve(self):
-        self.initial_candidate_size = self.hj.pid_cls.n * 2
-        lg.msg(logging.DEBUG, 'Initial candidate size set to {}'.format(self.initial_candidate_size))
-
-        for i in range(self.initial_candidate_size):
+        for i in range(self.hj.initial_candidate_size):
             candidate = Particle()
             candidate.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             self.hj.population.append(candidate)
@@ -37,7 +28,10 @@ class GA(Optimizer):
             # Evaluate any new candidates
             for ci, candidate in enumerate(self.hj.population):
                 if candidate.fitness == candidate.fitness_default:
-                    candidate.fitness, self.hj.budget = self.hj.pid_cls.evaluator(candidate.candidate, self.hj.budget)
+                    c = candidate.candidate
+                    if self.hj.generator.__name__ == 'generator_chromosome':
+                        c = self.binary_to_float(c)
+                    candidate.fitness, self.hj.budget = self.hj.pid_cls.evaluator(c, self.hj.budget)
 
             # Sort population by fitness ascending
             self.hj.population.sort(key=lambda x: x.fitness, reverse=False)
@@ -74,17 +68,17 @@ class GA(Optimizer):
         return new_pop
 
     def parent_selection(self):
-        # Fitness proportionate selection (FPS), assigning probabilities to individuals acting as parents depending on their
-        # fitness
+        # Fitness proportionate selection (FPS), assigning probabilities to individuals based on fitness
         max_fitness = sum([particle.fitness for particle in self.hj.population])
-        #fitness_proportionate = [particle.fitness / max_fitness for particle in self.hj.population]  # Foor maximisation where higher fitness is better
+
+        #fitness_proportionate = [particle.fitness / max_fitness for particle in self.hj.population]  # For maximisation
 
         # Fitness proportionate where smaller fitness is better
         fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.hj.population) - 1) for particle in self.hj.population]
 
-        pointer_distance = 1 / self.number_parents
+        pointer_distance = 1 / self.hj.number_parents
         start_point = self.random.uniform(0, pointer_distance)
-        points = [start_point + i * pointer_distance for i in range(self.number_parents)]
+        points = [start_point + i * pointer_distance for i in range(self.hj.number_parents)]
 
         # Add boundary points
         points.insert(0, 0)
@@ -94,7 +88,7 @@ class GA(Optimizer):
 
         fitness_aggr = 0
         for fi, fp in enumerate(fitness_proportionate):
-            if len(parents) == self.number_parents:
+            if len(parents) == self.hj.number_parents:
                 break
             fitness_aggr += fp
             for pi, p in enumerate(points):
@@ -107,23 +101,12 @@ class GA(Optimizer):
 
     def parent_crossover(self):
         children = []
-        for i in range(self.number_children):
-            crossover_point = self.random.randint(1, self.hj.pid_cls.n - 1)
-            child = self.hj.population[self.parents[0]].candidate[:crossover_point]
-            for c in self.hj.population[self.parents[1]].candidate:
-                if c not in child:
-                    child.append(c)
+        for i in range(self.hj.number_children):
+            child = self.crossover(self.hj.population[self.parents[0]].candidate, self.hj.population[self.parents[1]].candidate)
             children.append(child)
 
         return children
 
     def children_mutate(self):
-        """
-        Swap 2 tasks at random
-        """
-        # Swap positions of the 2 job tasks in the candidate
-        for i in range(self.number_children):
-            # Generate 2 task numbers at random, within range
-            tasks = self.random.sample(range(0, self.hj.pid_cls.n), 2)
-            self.children[i][tasks[0]], self.children[i][tasks[1]] = \
-                self.children[i][tasks[1]], self.children[i][tasks[0]]
+        for i in range(self.hj.number_children):
+            self.children[i] = self.n_exchange(self.children[i])

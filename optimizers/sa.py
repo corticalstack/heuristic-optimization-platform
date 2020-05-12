@@ -33,7 +33,7 @@ class SA(Optimizer):
     def anneal(self):
         # Set initial solution candidate
         if self.hj.rbest.fitness == self.hj.rbest.fitness_default:
-            self.hj.rbest.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_lb)
+            self.hj.rbest.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             self.hj.rbest.fitness, self.hj.budget = self.hj.pid_cls.evaluator(self.hj.rbest.candidate, self.hj.budget)
 
         self.temp = self.initial_temp
@@ -43,7 +43,7 @@ class SA(Optimizer):
 
             # If continuous problem generate new solution otherwise perturb current candidate combination
             if len(self.hj.rbest.candidate) == 1:
-                new.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_lb)
+                new.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             else:
                 new.candidate = self.n_swap(self.hj.rbest.candidate)
 
@@ -67,6 +67,6 @@ class SA(Optimizer):
             fitness, self.initial_temp_cost = self.hj.pid_cls.evaluator(candidate, self.initial_temp_cost)
             candidates.append(fitness)
 
-        # Initial temperature set to temperature spread of sample
-        it = int(max(candidates) - min(candidates))
+        # Initial temperature set to 20% of temperature spread of sample
+        it = int((max(candidates) - min(candidates)) / 5)
         return it

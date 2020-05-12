@@ -4,6 +4,7 @@ from optimizers.particle import Particle
 class HopJob:
     def __init__(self):
         self.step = 0
+        self.type = None
         self.pid = None
         self.pid_cls = None
         self.pid_lb = 0
@@ -18,7 +19,11 @@ class HopJob:
         self.comp_budget_base = 0
         self.budget = 0
         self.runs_per_optimizer = 0
+        self.bit_computing = 0
         self.initial_sample = False
+        self.initial_candidate_size = 0
+        self.number_parents = 0
+        self.number_children = 0
         self.sample_size_factor = 100  # Usually multiples n dimensions to determine sample size
         self.generator = None
         self.rbest = Particle()

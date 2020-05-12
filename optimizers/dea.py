@@ -28,7 +28,7 @@ class DEA(Optimizer):
 
         final_pop.sort(reverse=True)
         self.hj.rbest.fitness = final_pop[0].fitness
-        self.hj.rbest.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(final_pop[0].candidate)
+        self.hj.rbest.candidate = final_pop[0].candidate
 
         self.hj.rft = list(set(self.hj.rft))  # Remove duplicates
         self.hj.rft.sort(reverse=True)
