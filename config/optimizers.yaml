@@ -1,7 +1,7 @@
 # Optimizers configuration
 
   SA:
-    enabled: False
+    enabled: True
     description: Simulated Annealing
     type: low
     optimizer: SA
@@ -9,7 +9,7 @@
     lb: null
     ub: null
   DE:
-    enabled: False
+    enabled: True
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA
@@ -17,7 +17,7 @@
     lb: 0
     ub: 4
   ES:
-    enabled: False
+    enabled: True
     description: Evoluation Strategy (Inspyred)
     type: low
     optimizer: ES
@@ -26,7 +26,7 @@
     lb: 0
     ub: 4
   GA:
-    enabled: False
+    enabled: True
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
@@ -34,10 +34,10 @@
     initial_sample: False
     lb: null
     ub: null
-    number_parents: 3
-    number_children: 5
+    number_parents: 2
+    number_children: 10
   PSO:
-    enabled: True
+    enabled: true
     description: Particle swarm
     type: low
     optimizer: PSO

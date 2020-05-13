@@ -19,11 +19,13 @@ class Optimizer:
 
     def binary_to_float(self, binary):
         # Transform bit string to float
-        float_val = float(int(''.join([str(i) for i in binary]), 2))
-
-        # Rescale float within lower and upper bounds of
-        float_val = float_val / (2 ** self.hj.bit_computing - 1) * (self.hj.pid_ub - self.hj.pid_lb) + self.hj.pid_lb
-        return float_val
+        float_vals = []
+        for b in binary:
+            fv = float(int(''.join([str(i) for i in b]), 2))
+            # Rescale float within lower and upper bounds of
+            fv = fv / (2 ** self.hj.bit_computing - 1) * (self.hj.pid_ub - self.hj.pid_lb) + self.hj.pid_lb
+            float_vals.append(fv)
+        return float_vals
 
     def n_swap(self, candidate):
         # This does a local search by swapping two random jobs
@@ -41,8 +43,16 @@ class Optimizer:
         """
         Exchange job positions and i and j
         """
-        ops = self.random.sample(range(0, len(candidate)), 2)
-        candidate[ops[0]], candidate[ops[1]] = candidate[ops[1]], candidate[ops[0]]
+        def _exchange(_c):
+            ops = self.random.sample(range(0, len(_c)), 2)
+            _c[ops[0]], _c[ops[1]] = _c[ops[1]], _c[ops[0]]
+            return _c
+
+        if self.hj.type == 'combinatorial':
+            candidate = _exchange(candidate)
+        else:
+            for c in candidate:
+                c = _exchange(c)
         return candidate
 
     def n_shift(self):
@@ -59,7 +69,10 @@ class Optimizer:
                 if c not in child:
                     child.append(c)
         else:
-            child = parent0[:crossover_point] + parent1[crossover_point:]
+            child = []
+            for pi, p in enumerate(parent0):
+                cv = parent0[pi][:crossover_point] + parent1[pi][crossover_point:]
+                child.append(cv)
         return child
 
     def pre_processing(self):

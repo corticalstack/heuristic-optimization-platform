@@ -111,7 +111,7 @@ class Controller:
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
         # Optimizer configured generator overrides higher level problem generator e.g. PSO works on continuous values
-        if 'generator' in self.settings['opt'][job.oid]:
+        if 'generator' in self.settings['opt'][job.oid] and job.type == 'continuous':
             job.generator = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator'])
         else:
             job.generator = getattr(job.pid_cls, 'generator_' + self.settings['prb'][job.pid]['generator'])

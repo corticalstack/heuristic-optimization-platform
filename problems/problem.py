@@ -41,21 +41,20 @@ class Problem:
         return cont
 
     def generator_chromosome(self, **kwargs):
-        chromosome = [self.random.choice([0, 1]) for _ in range(self.hj.bit_computing)]
+        chromosome = []
+        for _ in range(self.n):
+            chromosome.append([self.random.choice([0, 1]) for _ in range(self.hj.bit_computing)])
         return chromosome
 
     def generator_continuous(self, **kwargs):
         candidate = []
-        for j in range(self.n):
+        for _ in range(self.n):
             candidate.append(self.random.uniform(kwargs['lb'], kwargs['ub']))
-
         return candidate
 
     def generate_initial_sample(self):
         sample = []
         num = int(self.n * self.hj.sample_size_factor)
-
-        for i in range(num):
+        for _ in range(num):
             sample.append(self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
-
         return sample

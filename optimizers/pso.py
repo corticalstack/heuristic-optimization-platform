@@ -23,9 +23,15 @@ class PSO(Optimizer):
         self.velocity_min = -self.hj.oid_ub
         self.velocity_max = self.hj.oid_ub
 
+    @staticmethod
+    def clamp(candidate):
+        new_candidate = []
+        for c in candidate:
+            new_candidate.append(max(min(5.12, c), -5.12))
+        return new_candidate
+
     def optimize(self):
         self.swarm()
-        self.hj.rbest.candidate = self.hj.rbest.candidate_cont
 
     def swarm(self):
         # Incoming population migrates to starting population, reset velocity and continuous permutation values
@@ -34,21 +40,20 @@ class PSO(Optimizer):
 
         # Complete assembly of initial population size, accounting for any incoming migrant population
         for i in range(self.hj.initial_candidate_size - len(self.hj.population)):
-            c = Particle()
+            new_c = Particle()
             
             # Generate candidate of cont values within domain bounds
-            samples = self.hj.pid_cls.n ** 2
-            c.candidate_cont = self.hj.generator(n=samples, lb=self.hj.oid_lb, ub=self.hj.oid_ub)
+            new_c.candidate_cont = self.hj.generator(lb=self.hj.oid_lb, ub=self.hj.oid_ub)
 
             if self.hj.type == 'combinatorial':
                 # Transform candidate of cont values back to discrete using smallest position value method
-                c.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(c.candidate_cont)
+                new_c.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(new_c.candidate_cont)
             else:
-                c.candidate = c.candidate_cont
+                new_c.candidate = new_c.candidate_cont
 
-            c.fitness, self.hj.budget = self.hj.pid_cls.evaluator(c.candidate, self.hj.budget)
+            new_c.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new_c.candidate, self.hj.budget)
             
-            self.hj.population.append(c)
+            self.hj.population.append(new_c)
 
         self.gbest_swarm = copy.deepcopy(self.hj.population)
         self.prev_swarm = copy.deepcopy(self.hj.population)
@@ -61,7 +66,7 @@ class PSO(Optimizer):
 
             # Evaluate population fitness and set personal (local) best
             for ci, c in enumerate(self.hj.population):
-                c.fitness, self.hj.budget = self.hj.pid_cls.evaluator(c.candidate_cont, self.hj.budget)
+                c.fitness, self.hj.budget = self.hj.pid_cls.evaluator(c.candidate, self.hj.budget)
                 if c.fitness < self.gbest_swarm[ci].fitness:
                     self.gbest_swarm[ci] = copy.deepcopy(c)
                 if c.fitness < self.hj.rbest.fitness:
@@ -81,27 +86,23 @@ class PSO(Optimizer):
         self.hj.rbest = copy.deepcopy(candidate)
 
     def swarm_in_motion(self):
-        ns = []
+        new_s = []
         for ci, c in enumerate(self.hj.population):
-            nc = Particle()  # New candidate particle
-            nc.candidate_cont = []
+            new_c = Particle()  # New candidate particle
+            new_c.candidate_cont = []
             for pi, p in enumerate(c.candidate_cont):
                 exp_inertia = p + self.weight * (p - self.prev_swarm[ci].candidate_cont[pi])
                 exp_local = self.local_c1 * self.random.random() * (self.gbest_swarm[ci].candidate_cont[pi] - p)
                 exp_global = self.global_c2 * self.random.random() * (self.hj.rbest.candidate_cont[pi] - p)
                 velocity = exp_inertia + exp_local + exp_global
-                nc.candidate_cont.append(velocity)
+                new_c.candidate_cont.append(velocity)
 
             if self.hj.type == 'combinatorial':
-                nc.candidate_cont = self.hj.pid_cls.candidate_spv_continuous_to_discrete(nc.candidate_cont)
+                new_c.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(new_c.candidate_cont)
             else:
-                nc.candidate_cont = self.clamp(nc.candidate_cont)
-            ns.append(nc)
+                new_c.candidate_cont = self.clamp(new_c.candidate_cont)
+                new_c.candidate = new_c.candidate_cont
+            new_s.append(new_c)
 
-        return ns
+        return new_s
 
-    def clamp(self, candidate):
-        new_candidate = []
-        for c in candidate:
-            new_candidate.append(max(min(5.12, c), -5.12))
-        return new_candidate

@@ -38,7 +38,7 @@ class GA(Optimizer):
 
             if self.hj.population[0].fitness < self.hj.rbest.fitness:
                 lg.msg(logging.DEBUG, 'Previous best is {}, now updated with new best {}'.format(
-                    self.hj.gbest.fitness, self.hj.population[0].fitness))
+                    self.hj.rbest.fitness, self.hj.population[0].fitness))
                 self.hj.rbest.fitness = self.hj.population[0].fitness
                 self.hj.rbest.candidate = self.hj.population[0].candidate
                 self.hj.rft.append(self.hj.population[0].fitness)
