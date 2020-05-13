@@ -45,12 +45,12 @@ class SA(Optimizer):
             if self.hj.type == 'continuous':
                 new.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             else:
-                new.candidate = self.n_swap(self.hj.rbest.candidate)
+                new.candidate = self.hj.variator(self.hj.rbest.candidate)
 
             new.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new.candidate, self.hj.budget)
             loss = self.hj.rbest.fitness - new.fitness
-            if loss > 0.7:
-                loss = 0.7
+            # if loss > 0.7:
+            #     loss = 0.7
             probability = math.exp(loss / self.temp)
 
             if (new.fitness < self.hj.rbest.fitness) or (self.random.random() < probability):
@@ -70,7 +70,7 @@ class SA(Optimizer):
             candidates.append(fitness)
 
         # Initial temperature set to 20% of temperature spread of sample
-        #it = int((max(candidates) - min(candidates)) / 5)
-        import numpy as np
-        it = int(np.percentile(candidates, 95))
+        it = int((max(candidates) - min(candidates)) / 5)
+        # import numpy as np
+        # it = int(np.percentile(candidates, 95))
         return it

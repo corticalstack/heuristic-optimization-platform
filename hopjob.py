@@ -26,6 +26,7 @@ class HopJob:
         self.number_children = 0
         self.sample_size_factor = 100  # Usually multiples n dimensions to determine sample size
         self.generator = None
+        self.variator = None
         self.rbest = Particle()
         self.gbest = Particle()
         self.rft = []

@@ -116,6 +116,9 @@ class Controller:
         else:
             job.generator = getattr(job.pid_cls, 'generator_' + self.settings['prb'][job.pid]['generator'])
 
+        if 'variator' in self.settings['opt'][job.oid]:
+            job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
+
         job.coeff_inertia = self.settings['prb'][job.pid]['coeff_inertia']
         job.coeff_local = self.settings['prb'][job.pid]['coeff_local']
         job.coeff_global = self.settings['prb'][job.pid]['coeff_global']

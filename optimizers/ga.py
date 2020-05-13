@@ -102,11 +102,15 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.hj.number_children):
-            child = self.crossover(self.hj.population[self.parents[0]].candidate, self.hj.population[self.parents[1]].candidate)
+            child = self.one_point_crossover(self.hj.population[self.parents[0]].candidate, self.hj.population[self.parents[1]].candidate)
             children.append(child)
 
         return children
 
     def children_mutate(self):
+        # could possible only mutate if parebnts are too similar e.g.
+        # Order significant
+        #  [i for i, j in zip(self.hj.population[self.parents[0]].candidate, self.hj.population[self.parents[1]].candidate) if i == j]
+        # then check size
         for i in range(self.hj.number_children):
-            self.children[i] = self.n_exchange(self.children[i])
+            self.children[i] = self.hj.variator(self.children[i])
