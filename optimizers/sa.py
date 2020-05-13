@@ -49,6 +49,8 @@ class SA(Optimizer):
 
             new.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new.candidate, self.hj.budget)
             loss = self.hj.rbest.fitness - new.fitness
+            if loss > 0.7:
+                loss = 0.7
             probability = math.exp(loss / self.temp)
 
             if (new.fitness < self.hj.rbest.fitness) or (self.random.random() < probability):
@@ -68,5 +70,7 @@ class SA(Optimizer):
             candidates.append(fitness)
 
         # Initial temperature set to 20% of temperature spread of sample
-        it = int((max(candidates) - min(candidates)) / 5)
+        #it = int((max(candidates) - min(candidates)) / 5)
+        import numpy as np
+        it = int(np.percentile(candidates, 95))
         return it

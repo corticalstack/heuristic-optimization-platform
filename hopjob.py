@@ -35,6 +35,9 @@ class HopJob:
         self.end_time = 0
         self.total_comp_time_s = 0
         self.avg_comp_time_s = 0
+        self.coeff_inertia = 0
+        self.coeff_local = 0
+        self.coeff_global = 0
 
 
 

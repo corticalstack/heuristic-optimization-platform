@@ -16,10 +16,6 @@ class PSO(Optimizer):
         self.gbest_swarm = []
         self.prev_swarm = []
 
-        self.weight = 0.5  # Inertia
-        self.local_c1 = 2.1
-        self.global_c2 = 2.1
-
         self.velocity_min = -self.hj.oid_ub
         self.velocity_max = self.hj.oid_ub
 
@@ -91,9 +87,9 @@ class PSO(Optimizer):
             new_c = Particle()  # New candidate particle
             new_c.candidate_cont = []
             for pi, p in enumerate(c.candidate_cont):
-                exp_inertia = p + self.weight * (p - self.prev_swarm[ci].candidate_cont[pi])
-                exp_local = self.local_c1 * self.random.random() * (self.gbest_swarm[ci].candidate_cont[pi] - p)
-                exp_global = self.global_c2 * self.random.random() * (self.hj.rbest.candidate_cont[pi] - p)
+                exp_inertia = p + self.hj.coeff_inertia * (p - self.prev_swarm[ci].candidate_cont[pi])
+                exp_local = self.hj.coeff_local * self.random.random() * (self.gbest_swarm[ci].candidate_cont[pi] - p)
+                exp_global = self.hj.coeff_global * self.random.random() * (self.hj.rbest.candidate_cont[pi] - p)
                 velocity = exp_inertia + exp_local + exp_global
                 new_c.candidate_cont.append(velocity)
 

@@ -116,6 +116,10 @@ class Controller:
         else:
             job.generator = getattr(job.pid_cls, 'generator_' + self.settings['prb'][job.pid]['generator'])
 
+        job.coeff_inertia = self.settings['prb'][job.pid]['coeff_inertia']
+        job.coeff_local = self.settings['prb'][job.pid]['coeff_local']
+        job.coeff_global = self.settings['prb'][job.pid]['coeff_global']
+
         return job
 
     def get_enabled_problems(self):

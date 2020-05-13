@@ -16,6 +16,9 @@
             enabled: False
     lb: 0
     ub: nmax
+    coeff_inertia: 0.4
+    coeff_local: 2.1
+    coeff_global: 2.1
   RASTRIGIN:
     enabled: True
     type: continuous
@@ -23,3 +26,6 @@
     description: Rastrigin
     lb: -5.12
     ub: 5.12
+    coeff_inertia: 0.7
+    coeff_local: 2.0
+    coeff_global: 2.0
