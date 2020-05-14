@@ -94,31 +94,7 @@ class Controller:
             for llh in self.settings['opt'][job.oid]['low_level_selection_pool']:
                 job.low_level_selection_pool.append(llh)
 
-        # Set low-level heuristic sampling and computational allowance
-        if 'llh_sample_runs' in self.settings['opt'][job.oid]:
-            job.llh_sample_runs = self.settings['opt'][job.oid]['llh_sample_runs']
-
-        if 'llh_sample_budget_coeff' in self.settings['opt'][job.oid]:
-            job.llh_sample_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
-
-        if 'llh_budget_coeff' in self.settings['opt'][job.oid]:
-            job.llh_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
-
-        # ----- Sampling
-        # Optimizers like SA use an initial sample to determine characteristics like starting temp
-        if 'initial_sample' in self.settings['opt'][job.oid]:
-            job.initial_sample = self.settings['opt'][job.oid]['initial_sample']
-
-        # ----- Population Size
-        # For optimizers like PSO and GA work with a defined population size. Depends on problem dimension and type
-        if job.type == 'combinatorial':
-            job.initial_pop_size = job.pid_cls.n * 2
-        else:
-            job.initial_pop_size = job.pid_cls.n * 3
-
-        # Define bit length for optimizers like GA that encode between real and binary
-        job.bit_computing = self.settings['gen']['bit_computing']
-
+        # ----- Computational Budget
         # Set computing resources like number of runs allocated and computational budget
         job.runs_per_optimizer = self.settings['gen']['runs_per_optimizer']
         job.comp_budget_base = self.settings['gen']['comp_budget_base']
@@ -128,15 +104,22 @@ class Controller:
         job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
 
+        # Set low-level heuristic sampling and computational budget
+        if 'llh_sample_runs' in self.settings['opt'][job.oid]:
+            job.llh_sample_runs = self.settings['opt'][job.oid]['llh_sample_runs']
 
+        if 'llh_sample_budget_coeff' in self.settings['opt'][job.oid]:
+            job.llh_sample_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
 
+        if 'llh_budget_coeff' in self.settings['opt'][job.oid]:
+            job.llh_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
 
-        if 'number_parents' in self.settings['opt'][job.oid]:
-            job.number_parents = self.settings['opt'][job.oid]['number_parents']
+        # ----- Binary Encoding
+        # Define bit length for optimizers like GA that encode between real and binary
+        job.bit_computing = self.settings['gen']['bit_computing']
 
-        if 'number_children' in self.settings['opt'][job.oid]:
-            job.number_children = self.settings['opt'][job.oid]['number_children']
-
+        # ----- Bounds
+        # Problems like Rastrigin bound to [-5.12, 5.12] whilst FSSP combinatorial has upper bound size of n dim
         job.pid_lb = self.settings['prb'][job.pid]['lb']
         if self.settings['prb'][job.pid]['ub'] == 'nmax':
             job.pid_ub = job.pid_cls.n
@@ -149,9 +132,29 @@ class Controller:
         if 'ub' in self.settings['opt'][job.oid]:
             job.oid_ub = self.settings['opt'][job.oid]['ub']
 
+        # ----- Sampling
+        # Optimizers like SA use an initial sample to determine characteristics like starting temp
+        if 'initial_sample' in self.settings['opt'][job.oid]:
+            job.initial_sample = self.settings['opt'][job.oid]['initial_sample']
+
+        # ----- Population
+        # For optimizers like PSO and GA that work with a defined population size, depends on problem dimension and type
+        if job.type == 'combinatorial':
+            job.initial_pop_size = job.pid_cls.n * 2
+        else:
+            job.initial_pop_size = job.pid_cls.n * 3
+
+        if 'number_parents' in self.settings['opt'][job.oid]:
+            job.number_parents = self.settings['opt'][job.oid]['number_parents']
+
+        if 'number_children' in self.settings['opt'][job.oid]:
+            job.number_children = self.settings['opt'][job.oid]['number_children']
+
+        # ----- Instantiate optimizer class
         cls = globals()[self.settings['opt'][job.oid]['optimizer']]
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
+        # ----- Generator (solution) and Variator (neighbour from solution) instantiation
         # Optimizer configured generator overrides higher level problem generator e.g. PSO works on continuous values
         if 'generator' in self.settings['opt'][job.oid] and job.type == 'continuous':
             job.generator = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator'])
@@ -161,6 +164,7 @@ class Controller:
         if 'variator' in self.settings['opt'][job.oid]:
             job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
 
+        # ----- Various co-efficients
         if 'inertia_coeff' in self.settings['prb'][job.pid]:
             job.inertia_coeff = self.settings['prb'][job.pid]['inertia_coeff']
 
@@ -266,7 +270,7 @@ class Controller:
 
         for k, v in gft.items():
             self.vis.fitness_trend_all_optimizers(v)
-            summary = Stats.get_summary(v)
+            #summary = Stats.get_summary(v)
             # optimizers[k]['avg_cts'], 'lb_diff_pct': optimizers[opt]['lb_diff_pct'], 'ub_diff_pct':
             # optimizers[opt]['ub_diff_pct']}
             # lg.msg(logging.INFO,
