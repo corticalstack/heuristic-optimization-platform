@@ -1,10 +1,17 @@
+import copy
+
+
 class InspyredWrapper:
     def __init__(self):
         pass
 
     @staticmethod
     def generator(random, args):
-        candidate = args['slf'].hj.generator(lb=args['slf'].hj.pid_lb, ub=args['slf'].hj.pid_ub)
+        if args['slf'].hj.population:
+            candidate = copy.deepcopy(args['slf'].hj.population[0].candidate)
+            args['slf'].hj.population.pop(0)
+        else:
+            candidate = args['slf'].get_generator()(lb=args['slf'].hj.pid_lb, ub=args['slf'].hj.pid_ub)
         return candidate
 
     @staticmethod
@@ -15,6 +22,7 @@ class InspyredWrapper:
                 c = args['slf'].hj.pid_cls.candidate_spv_continuous_to_discrete(c)
             f, _ = args['slf'].hj.pid_cls.evaluator(c)
             fitness.append(f)
+            args['slf'].hj.budget -= 1
         return fitness
 
     @staticmethod

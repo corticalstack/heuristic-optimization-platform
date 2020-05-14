@@ -51,7 +51,8 @@ class HopJob:
         self.initial_pop_size = 0
 
         # Solution generator and variator
-        self.generator = None
+        self.generator_comb = None
+        self.generator_cont = None
         self.variator = None
 
         # Runtime stats
@@ -59,8 +60,8 @@ class HopJob:
         self.gbest = Particle()
         self.rft = []
         self.gft = []
-        self.oid_run_count = 0
-        self.oid_aggr_imp = 0
+        self.llh_oid_run_count = 0
+        self.llh_oid_aggr_imp = 0
         self.start_time = 0
         self.end_time = 0
         self.total_comp_time_s = 0

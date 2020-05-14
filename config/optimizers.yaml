@@ -1,37 +1,43 @@
 # Optimizers configuration
 
   SA:
-    enabled: False
+    enabled: True
     description: Simulated Annealing
     type: low
     optimizer: SA
+    generator_comb: discrete
+    generator_cont: continuous
     variator: n_exchange_adjacent
     initial_sample: True
     lb: null
     ub: null
   DE:
-    enabled: False
+    enabled: True
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA
+    generator_comb: continuous
+    generator_cont: continuous
     initial_sample: False
     lb: 0
     ub: 4
   ES:
-    enabled: False
+    enabled: True
     description: Evoluation Strategy (Inspyred)
     type: low
     optimizer: ES
-    generator: continuous
+    generator_comb: continuous
+    generator_cont: continuous
     initial_sample: False
     lb: 0
     ub: 4
   GA:
-    enabled: False
+    enabled: True
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
-    generator: chromosome
+    generator_comb: discrete
+    generator_cont: chromosome
     variator: n_exchange
     initial_sample: False
     lb: null
@@ -39,22 +45,23 @@
     number_parents: 2
     number_children: 10
   PSO:
-    enabled: False
+    enabled: True
     description: Particle swarm
     type: low
     optimizer: PSO
-    generator: continuous
+    generator_comb: continuous
+    generator_cont: continuous
     initial_sample: False
     lb: 0
     ub: 4
   GA-HH:
-    enabled: True
+    enabled: False
     description: Hyper heuristics
     type: hyper
     optimizer: HH
     low_level_selection_pool:
-        - PSO
-        - GA
+        - DE
+        - ES
     decay: 0.5
     decay_coeff: 0.97
     llh_sample_runs: 3

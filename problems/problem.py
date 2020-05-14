@@ -56,5 +56,8 @@ class Problem:
         sample = []
         num = int(self.n * (self.hj.budget * self.hj.sample_size_coeff))
         for _ in range(num):
-            sample.append(self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
+            if self.hj.type == 'combinatorial':
+                sample.append(self.hj.generator_comb(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
+            else:
+                sample.append(self.hj.generator_cont(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
         return sample

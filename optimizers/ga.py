@@ -4,6 +4,7 @@ import logging
 from utilities import logger as lg
 import math
 import numpy as np
+import copy
 
 
 class GA(Optimizer):
@@ -22,7 +23,7 @@ class GA(Optimizer):
         # Complete assembly of initial population size, accounting for any incoming migrant population
         for i in range(self.hj.initial_pop_size - len(self.hj.population)):
             candidate = Particle()
-            candidate.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
+            candidate.candidate = self.get_generator()(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             self.hj.population.append(candidate)
 
         while self.hj.budget > 0:
@@ -30,8 +31,8 @@ class GA(Optimizer):
             # Evaluate any new candidates
             for ci, candidate in enumerate(self.hj.population):
                 if candidate.fitness == candidate.fitness_default:
-                    c = candidate.candidate
-                    if self.hj.generator.__name__ == 'generator_chromosome':
+                    c = copy.deepcopy(candidate.candidate)
+                    if self.get_generator().__name__ == 'generator_chromosome':
                         c = self.binary_to_float(c)
                     candidate.fitness, self.hj.budget = self.hj.pid_cls.evaluator(c, self.hj.budget)
 
@@ -53,22 +54,6 @@ class GA(Optimizer):
 
             self.hj.population = self.update_population()
 
-    def update_population(self):
-        new_pop = []
-        for p in self.parents:
-            particle = Particle()
-            particle.fitness = self.hj.population[p].fitness
-            particle.candidate = self.hj.population[p].candidate
-            new_pop.append(particle)
-
-        # Add children to population
-        for c in self.children:
-            particle = Particle()
-            particle.candidate = c
-            new_pop.append(particle)
-
-        return new_pop
-
     def parent_selection(self):
         # Fitness proportionate selection (FPS), assigning probabilities to individuals based on fitness
         max_fitness = sum([particle.fitness for particle in self.hj.population])
@@ -76,7 +61,8 @@ class GA(Optimizer):
         #fitness_proportionate = [particle.fitness / max_fitness for particle in self.hj.population]  # For maximisation
 
         # Fitness proportionate where smaller fitness is better
-        fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.hj.population) - 1) for particle in self.hj.population]
+        fitness_proportionate = [((max_fitness - particle.fitness) / max_fitness) / (len(self.hj.population) - 1) for
+                                 particle in self.hj.population]
 
         pointer_distance = 1 / self.hj.number_parents
         start_point = self.random.uniform(0, pointer_distance)
@@ -104,7 +90,8 @@ class GA(Optimizer):
     def parent_crossover(self):
         children = []
         for i in range(self.hj.number_children):
-            child = self.one_point_crossover(self.hj.population[self.parents[0]].candidate, self.hj.population[self.parents[1]].candidate)
+            child = self.one_point_crossover(self.hj.population[self.parents[0]].candidate,
+                                             self.hj.population[self.parents[1]].candidate)
             children.append(child)
 
         return children
@@ -116,3 +103,19 @@ class GA(Optimizer):
         # then check size
         for i in range(self.hj.number_children):
             self.children[i] = self.hj.variator(self.children[i])
+
+    def update_population(self):
+        new_pop = []
+        for p in self.parents:
+            particle = Particle()
+            particle.fitness = self.hj.population[p].fitness
+            particle.candidate = self.hj.population[p].candidate
+            new_pop.append(particle)
+
+        # Add children to population
+        for c in self.children:
+            particle = Particle()
+            particle.candidate = c
+            new_pop.append(particle)
+
+        return new_pop

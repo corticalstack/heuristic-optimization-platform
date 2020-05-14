@@ -36,6 +36,7 @@ class Controller:
         self.settings = self.get_config()
         self.problems_optimizers = []
         self.jobs = self.set_jobs()
+        self.budget = 0
 
     @staticmethod
     def get_config():
@@ -155,11 +156,11 @@ class Controller:
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
         # ----- Generator (solution) and Variator (neighbour from solution) instantiation
-        # Optimizer configured generator overrides higher level problem generator e.g. PSO works on continuous values
-        if 'generator' in self.settings['opt'][job.oid] and job.type == 'continuous':
-            job.generator = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator'])
-        else:
-            job.generator = getattr(job.pid_cls, 'generator_' + self.settings['prb'][job.pid]['generator'])
+        if 'generator_comb' in self.settings['opt'][job.oid]:
+            job.generator_comb = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator_comb'])
+
+        if 'generator_cont' in self.settings['opt'][job.oid]:
+            job.generator_cont = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator_cont'])
 
         if 'variator' in self.settings['opt'][job.oid]:
             job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
@@ -211,6 +212,7 @@ class Controller:
                 exec_start_time = time.time()
                 self.pre_processing(j)
                 j.oid_cls.run(jobs=self.jobs)
+                self.post_processing(j)
                 j.end_time = time.time()
                 j.total_comp_time_s += time.time() - exec_start_time
 
@@ -231,24 +233,16 @@ class Controller:
         self.summary()
 
     def pre_processing(self, j):
-        j.budget = j.pid_cls.n * j.comp_budget_base
+        self.budget = j.budget
         j.rft = []
-
-        # Set global best single particle if passed
-        # if 'gbest' in kwargs:
-        #    self.gbest = kwargs['gbest']
-        # else:
         j.rbest = Particle()
-
-        # Set population of particles if passed
-        # if 'pop' in kwargs:
-        #    self.population = kwargs['pop']
-        # else:
         j.population = []
-
 
         if j.initial_sample:
             j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
+
+    def post_processing(self, j):
+        j.budget = self.budget
 
     def load_components(self):
         pass

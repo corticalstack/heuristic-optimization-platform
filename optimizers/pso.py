@@ -19,13 +19,6 @@ class PSO(Optimizer):
         self.velocity_min = -self.hj.oid_ub
         self.velocity_max = self.hj.oid_ub
 
-    @staticmethod
-    def clamp(candidate):
-        new_candidate = []
-        for c in candidate:
-            new_candidate.append(max(min(5.12, c), -5.12))
-        return new_candidate
-
     def optimize(self):
         self.swarm()
 
@@ -39,7 +32,7 @@ class PSO(Optimizer):
             new_c = Particle()
             
             # Generate candidate of cont values within domain bounds
-            new_c.candidate_cont = self.hj.generator(lb=self.hj.oid_lb, ub=self.hj.oid_ub)
+            new_c.candidate_cont = self.get_generator()(lb=self.hj.oid_lb, ub=self.hj.oid_ub)
 
             if self.hj.type == 'combinatorial':
                 # Transform candidate of cont values back to discrete using smallest position value method
@@ -97,3 +90,8 @@ class PSO(Optimizer):
 
         return new_s
 
+    def clamp(self, candidate):
+        new_candidate = []
+        for c in candidate:
+            new_candidate.append(max(min(self.hj.pid_ub, c), self.hj.pid_lb))
+        return new_candidate

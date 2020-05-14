@@ -24,9 +24,6 @@ class FSSP(Problem):
         # Set n dimensions
         self.n = self.jobs['quantity']
 
-        # Set computational budget scaled to problem instance dimensions
-        #self.set_budget()
-
         #self.jobs_set_total_units()
         #self.machines_set_loadout_times()
         #self.machines_set_lower_bounds_taillard()
@@ -60,11 +57,6 @@ class FSSP(Problem):
                     self.iub, self.ilb = [int(n) for n in job_detail.split()]
                 else:
                     self.jobs_add(job_detail)
-
-    def set_budget(self):
-        # Base budget * problem dimensions
-        self.budget['total'] = self.cfg.settings['gen']['comp_budget_base'] * self.n
-        self.budget['remaining'] = self.budget['total']
 
     def evaluator(self, candidate, budget=1):
         self.machines['assigned_jobs'] = []

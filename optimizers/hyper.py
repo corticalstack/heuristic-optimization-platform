@@ -28,7 +28,7 @@ class Hyper(Optimizer):
         Optimizer.post_processing(self)
         print('Finished with best of ', self.hj.rbest.fitness)
         for k, v in self.low_level_heuristics.items():
-            print('Llh {} executed {} times and with aggregated improvements of {}'.format(v.oid, v.oid_run_count, v.oid_aggr_imp))
+            print('Llh {} executed {} times and with aggregated improvements of {}'.format(v.oid, v.llh_oid_run_count, v.llh_oid_aggr_imp))
 
     def best_candidate_from_pool(self):
         best = min((min((v, c) for c, v in enumerate(row)), r) for r, row in enumerate(self.llh_fitness))
@@ -45,8 +45,10 @@ class Hyper(Optimizer):
     def set_llh_samples(self):
         # Initialise starting samples
         for k, v in self.low_level_heuristics.items():
-            for i in range(3):
+            for i in range(self.hj.llh_sample_runs):
                 v.budget = self.hj.llh_sample_budget
+                if v.initial_sample:
+                    v.pid_cls.initial_sample = v.pid_cls.generate_initial_sample()
                 v.oid_cls.run()
                 self.hj.budget -= self.hj.llh_sample_budget
                 self.hj.budget += v.budget  # Credit any early termination or debit any budget overrun
@@ -71,5 +73,7 @@ class Hyper(Optimizer):
 
     def import_low_level_heuristics(self):
         for hci, hc in enumerate(self.hj.low_level_selection_pool):
-            llh = [x for x in self.jobs if x.pid == self.hj.pid and x.oid == hc]
-            self.low_level_heuristics[hci] = llh[0]
+            c = [x for x in self.jobs if x.pid == self.hj.pid and x.oid == hc][0]
+            c.llh_oid_run_count = 0
+            c.llh_oid_aggr_imp = 0
+            self.low_level_heuristics[hci] = c

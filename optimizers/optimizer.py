@@ -10,12 +10,17 @@ class Optimizer:
         # Persist current configuration and problem
         self.random = kwargs['random']
         self.hj = kwargs['hopjob']
-        self.initial_candidate_size = 1
 
     def run(self, **kwargs):
         self.pre_processing(**kwargs)
         self.optimize()
         self.post_processing()
+
+    def get_generator(self):
+        if self.hj.type == 'combinatorial':
+            return self.hj.generator_comb
+        else:
+            return self.hj.generator_cont
 
     def binary_to_float(self, binary):
         # Transform bit string to float
@@ -39,6 +44,7 @@ class Optimizer:
             _c[ops[0]], _c[ops[1]] = _c[ops[1]], _c[ops[0]]
             return _c
 
+        candidate = copy.deepcopy(candidate)
         if self.hj.type == 'combinatorial':
             candidate = _exchange(candidate)
         else:
@@ -58,6 +64,7 @@ class Optimizer:
             _c[i], _c[j] = _c[j], _c[i]
             return _c
 
+        candidate = copy.deepcopy(candidate)
         if self.hj.type == 'combinatorial':
             candidate = _exchange_adjacent(candidate)
         else:
@@ -77,6 +84,7 @@ class Optimizer:
             _c.insert(j, _c.pop(i))
             return _c
 
+        candidate = copy.deepcopy(candidate)
         if self.hj.type == 'combinatorial':
             candidate = _remove_insert(candidate)
         else:
@@ -96,6 +104,7 @@ class Optimizer:
             _c.insert(j, _c.pop(i))
             return _c
 
+        candidate = copy.deepcopy(candidate)
         if self.hj.type == 'combinatorial':
             candidate = _to_first(candidate)
         else:

@@ -33,30 +33,30 @@ class SA(Optimizer):
     def anneal(self):
         # Set initial solution candidate
         if self.hj.rbest.fitness == self.hj.rbest.fitness_default:
-            self.hj.rbest.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
+            self.hj.rbest.candidate = self.get_generator()(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             self.hj.rbest.fitness, self.hj.budget = self.hj.pid_cls.evaluator(self.hj.rbest.candidate, self.hj.budget)
 
         self.temp = self.initial_temp
 
         while self.hj.budget > 0 and (self.temp > self.temp_threshold):
-            new = Particle()
+            new_p = Particle()
 
             # If continuous problem generate new solution otherwise perturb current candidate combination
             if self.hj.type == 'continuous':
-                new.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
+                new_p.candidate = self.get_generator()(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             else:
-                new.candidate = self.hj.variator(self.hj.rbest.candidate)
+                new_p.candidate = self.hj.variator(self.hj.rbest.candidate)
 
-            new.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new.candidate, self.hj.budget)
-            loss = self.hj.rbest.fitness - new.fitness
+            new_p.fitness, self.hj.budget = self.hj.pid_cls.evaluator(new_p.candidate, self.hj.budget)
+            loss = self.hj.rbest.fitness - new_p.fitness
             # if loss > 0.7:
             #     loss = 0.7
             probability = math.exp(loss / self.temp)
 
-            if (new.fitness < self.hj.rbest.fitness) or (self.random.random() < probability):
+            if (new_p.fitness < self.hj.rbest.fitness) or (self.random.random() < probability):
                 lg.msg(logging.DEBUG, 'Previous best {} replaced by new best {}'.format(self.hj.rbest.fitness,
-                                                                                        new.fitness))
-                self.hj.rbest = copy.deepcopy(new)
+                                                                                        new_p.fitness))
+                self.hj.rbest = copy.deepcopy(new_p)
                 self.hj.rft.append(self.hj.rbest.fitness)
 
             self.temp *= self.cooling_rate

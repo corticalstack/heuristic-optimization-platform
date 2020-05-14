@@ -1,9 +1,8 @@
 # Problem configuration
 
   FSSP:
-    enabled: True
+    enabled: False
     type: combinatorial
-    generator: discrete
     description: Flow Shop Scheduling Problem
     benchmarks:
         taillard_20_5_i1.txt:
@@ -20,9 +19,8 @@
     local_coeff: 2.1
     global_coeff: 2.1
   RASTRIGIN:
-    enabled: False
+    enabled: True
     type: continuous
-    generator: continuous
     description: Rastrigin
     lb: -5.12
     ub: 5.12

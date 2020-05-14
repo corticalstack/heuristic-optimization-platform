@@ -1,5 +1,5 @@
 # General configuration
 
-  runs_per_optimizer: 10
-  comp_budget_base: 8000
+  runs_per_optimizer: 3
+  comp_budget_base: 800
   bit_computing: 16
