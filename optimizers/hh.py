@@ -6,50 +6,53 @@ class HH(Hyper):
     def __init__(self, **kwargs):
         Hyper.__init__(self, **kwargs)
 
-        self.decay = 0.5
-        self.decay_factor = 0.97
-
     def optimize(self):
-        self.decay = 0.6
         self.hyper()
 
     def hyper(self):
-        #self.budget *= 20
         self.set_llh_samples()
         self.add_samples_to_trend()
+        bcf, bc, llh = self.select_heuristic()
+        print('Starting with best sample {} with fitness {} by optimizer {}'.format(bc, bcf, self.low_level_heuristics[llh].oid))
 
-        while self.budget > 0:
+        while self.hj.budget > 0:
             bcf, bc, llh = self.select_heuristic()
-            self.set_gbest(bcf, bc)
+            self.set_rbest(bcf, bc)
 
             pop = self.set_pop()
-            cls = self.low_level_heuristics[llh]['cls']
 
             # Execute low level heuristic
-            gbest = copy.deepcopy(self.gbest)
-            run_best, run_ft, run_budget = cls.run(budget=self.llh_budget, gbest=gbest, pop=pop)
-            self.low_level_heuristics[llh]['run_count'] += 1
+            self.low_level_heuristics[llh].budget = self.hj.llh_budget
+            self.low_level_heuristics[llh].rbest.fitness = self.hj.rbest.fitness
+            self.low_level_heuristics[llh].rbest.candidate = self.hj.rbest.candidate
+            self.low_level_heuristics[llh].population = pop
 
-            print('Run best is ', run_best.fitness, ' with candidate ', run_best.candidate, ' by ', self.low_level_heuristics[llh]['llh'])
-            print('Global best is ', self.gbest.fitness)
+            self.low_level_heuristics[llh].oid_cls.run()
+            self.low_level_heuristics[llh].oid_run_count += 1
 
-            self.budget += run_budget
-            self.budget -= self.llh_budget
+            #print('Run best is ', self.low_level_heuristics[llh].rbest.fitness, ' with candidate ', self.low_level_heuristics[llh].rbest.candidate, ' by ', self.low_level_heuristics[llh].oid)
+            #print('Global best is ', self.hj.gbest.fitness)
 
-            if run_best.fitness < self.gbest.fitness:
-                print('Inserting fitness into archive ', run_best.fitness)
-                self.low_level_heuristics[llh]['aggr_imp'] += (self.gbest.fitness - run_best.fitness)
-                self.llh_fitness[llh].insert(0, run_best.fitness)  # Insert at start
-                self.llh_candidates[llh].insert(0, run_best.candidate)
-                self.fitness_trend.append(run_best.fitness)
-                self.set_gbest(run_best.fitness, run_best.candidate)
+            # Subtract max possible low level budget from hyper total
+            self.hj.budget -= self.hj.llh_budget
+
+            # Credit hyper budget with any remaining from low level heuristic, possibly due to early termination
+            self.hj.budget += self.low_level_heuristics[llh].budget
+
+            if self.low_level_heuristics[llh].rbest.fitness < self.hj.rbest.fitness:
+                print('Inserting fitness into archive {} by {}'.format( self.low_level_heuristics[llh].rbest.fitness, self.low_level_heuristics[llh].oid))
+                self.low_level_heuristics[llh].oid_aggr_imp += (self.hj.rbest.fitness - self.low_level_heuristics[llh].rbest.fitness)
+                self.llh_fitness[llh].insert(0, self.low_level_heuristics[llh].rbest.fitness)  # Insert at start
+                self.llh_candidates[llh].insert(0, self.low_level_heuristics[llh].rbest.candidate)
+                self.hj.rft.append(self.low_level_heuristics[llh].rbest.fitness)
+                self.set_rbest(self.low_level_heuristics[llh].rbest, self.hj.rbest)
 
     def select_heuristic(self):
         bcf, bc, llh = self.best_candidate_from_pool()
 
-        if self.llh_total > 1 and self.random.random() < self.decay:
+        if self.llh_total > 1 and self.random.random() < self.hj.decay:
             choice = [i for i in range(0, self.llh_total) if i != llh]
             llh = self.random.choice(choice)
 
-        self.decay *= self.decay_factor
+        self.hj.decay *= self.hj.decay_coeff
         return bcf, bc, llh

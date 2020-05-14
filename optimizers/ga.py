@@ -18,7 +18,9 @@ class GA(Optimizer):
         self.evolve()
 
     def evolve(self):
-        for i in range(self.hj.initial_candidate_size):
+
+        # Complete assembly of initial population size, accounting for any incoming migrant population
+        for i in range(self.hj.initial_pop_size - len(self.hj.population)):
             candidate = Particle()
             candidate.candidate = self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             self.hj.population.append(candidate)

@@ -54,7 +54,7 @@ class Problem:
 
     def generate_initial_sample(self):
         sample = []
-        num = int(self.n * self.hj.sample_size_factor)
+        num = int(self.n * (self.hj.budget * self.hj.sample_size_coeff))
         for _ in range(num):
             sample.append(self.hj.generator(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
         return sample

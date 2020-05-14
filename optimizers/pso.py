@@ -35,7 +35,7 @@ class PSO(Optimizer):
             self.reset_inherited_population_attr()
 
         # Complete assembly of initial population size, accounting for any incoming migrant population
-        for i in range(self.hj.initial_candidate_size - len(self.hj.population)):
+        for i in range(self.hj.initial_pop_size - len(self.hj.population)):
             new_c = Particle()
             
             # Generate candidate of cont values within domain bounds
@@ -70,13 +70,8 @@ class PSO(Optimizer):
                     self.hj.rft.append(c.fitness)
 
     def reset_inherited_population_attr(self):
-        pass
-        # for c in self.hj.population:
-        #     c.velocity = [round(self.velocity_min + (self.velocity_max - self.velocity_min) *
-        #                         self.random.uniform(0, 1), 2) for j in range(self.hj.pid_cls.n)]
-        #     c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb, self.hj.pid_ub)
-        #
-        #     self.gbest_pop_lbest(c)
+        for c in self.hj.population:
+            c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb, self.hj.pid_ub)
 
     def set_rbest(self, candidate):
         self.hj.rbest = copy.deepcopy(candidate)
@@ -87,9 +82,9 @@ class PSO(Optimizer):
             new_c = Particle()  # New candidate particle
             new_c.candidate_cont = []
             for pi, p in enumerate(c.candidate_cont):
-                exp_inertia = p + self.hj.coeff_inertia * (p - self.prev_swarm[ci].candidate_cont[pi])
-                exp_local = self.hj.coeff_local * self.random.random() * (self.gbest_swarm[ci].candidate_cont[pi] - p)
-                exp_global = self.hj.coeff_global * self.random.random() * (self.hj.rbest.candidate_cont[pi] - p)
+                exp_inertia = p + self.hj.inertia_coeff * (p - self.prev_swarm[ci].candidate_cont[pi])
+                exp_local = self.hj.local_coeff * self.random.random() * (self.gbest_swarm[ci].candidate_cont[pi] - p)
+                exp_global = self.hj.global_coeff * self.random.random() * (self.hj.rbest.candidate_cont[pi] - p)
                 velocity = exp_inertia + exp_local + exp_global
                 new_c.candidate_cont.append(velocity)
 

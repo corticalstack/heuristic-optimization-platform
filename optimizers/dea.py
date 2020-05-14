@@ -8,8 +8,6 @@ from optimizers.inspyred_wrapper import InspyredWrapper
 class DEA(Optimizer):
     def __init__(self, **kwargs):
         Optimizer.__init__(self, **kwargs)
-        self.initial_candidate_size = 30
-        lg.msg(logging.DEBUG, 'Population size to {}'.format(self.initial_candidate_size))
 
     def optimize(self):
         self.evolve()
@@ -21,7 +19,7 @@ class DEA(Optimizer):
 
         final_pop = dea.evolve(generator=InspyredWrapper.generator,
                                evaluator=InspyredWrapper.evaluator,
-                               pop_size=self.initial_candidate_size,
+                               pop_size=self.hj.initial_pop_size,
                                maximize=False,
                                max_generations=self.hj.budget,
                                slf=self)

@@ -12,8 +12,8 @@ class Optimizer:
         self.hj = kwargs['hopjob']
         self.initial_candidate_size = 1
 
-    def run(self):
-        self.pre_processing()
+    def run(self, **kwargs):
+        self.pre_processing(**kwargs)
         self.optimize()
         self.post_processing()
 
@@ -123,7 +123,7 @@ class Optimizer:
                 child.append(cv)
         return child
 
-    def pre_processing(self):
+    def pre_processing(self, **kwargs):
         # self.hj.fitness_trend = []
         #
         # # Set global best single particle if passed

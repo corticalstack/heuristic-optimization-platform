@@ -8,8 +8,6 @@ from optimizers.inspyred_wrapper import InspyredWrapper
 class ES(Optimizer):
     def __init__(self, **kwargs):
         Optimizer.__init__(self, **kwargs)
-        self.initial_candidate_size = 30
-        lg.msg(logging.DEBUG, 'Population size to {}'.format(self.initial_candidate_size))
 
     def optimize(self):
         self.evolve()
@@ -22,7 +20,7 @@ class ES(Optimizer):
 
         final_pop = es.evolve(generator=InspyredWrapper.generator,
                               evaluator=InspyredWrapper.evaluator,
-                              pop_size=self.initial_candidate_size,
+                              pop_size=self.hj.initial_pop_size,
                               maximize=False,
                               max_evaluations=self.hj.budget,
                               slf=self)

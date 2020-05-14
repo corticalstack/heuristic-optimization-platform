@@ -31,7 +31,7 @@ class Controller:
     def __init__(self):
         lg.msg(logging.INFO, 'Initialising controller')
         self.random = Random()
-        self.random.seed(42)
+        #self.random.seed(42)
         self.vis = Visualisation()
         self.settings = self.get_config()
         self.problems_optimizers = []
@@ -56,8 +56,8 @@ class Controller:
 
     def set_jobs(self):
         jobs = []
-        prob = self.get_enabled_problems()
-        opt = self.get_enabled_optimizers()
+        prob = self.get_problems()
+        opt = self.get_optimizers()
         self.problems_optimizers = list(product(prob, opt))
         self.problems_optimizers.sort()
 
@@ -75,23 +75,61 @@ class Controller:
         return jobs
 
     def create_job_spec(self, *args):
+        # Create new job specification
         job = HopJob()
+
+        # ----- Assign problem, optimizer, benchmark and type
         job.pid, job.oid, job.bid = args
         job.type = self.settings['prb'][job.pid]['type']
-        job.comp_budget_base = self.settings['gen']['comp_budget_base']
-        job.runs_per_optimizer = self.settings['gen']['runs_per_optimizer']
-        job.bit_computing = self.settings['gen']['bit_computing']
 
+        # ----- Active components
+        # Flags indicating problem and optimizer are active. We still build job spec for optimizer, as it may be
+        # disabled "standalone", but actively used as low-level heuristic (llh) in hyper-heuristic
+        job.pid_enabled = self.settings['prb'][job.pid]['enabled']
+        job.oid_enabled = self.settings['opt'][job.oid]['enabled']
+
+        # ----- Low Level Heuristics
+        # Set low-level meta-heuristic components for hype heuristic
+        if 'low_level_selection_pool' in self.settings['opt'][job.oid]:
+            for llh in self.settings['opt'][job.oid]['low_level_selection_pool']:
+                job.low_level_selection_pool.append(llh)
+
+        # Set low-level heuristic sampling and computational allowance
+        if 'llh_sample_runs' in self.settings['opt'][job.oid]:
+            job.llh_sample_runs = self.settings['opt'][job.oid]['llh_sample_runs']
+
+        if 'llh_sample_budget_coeff' in self.settings['opt'][job.oid]:
+            job.llh_sample_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
+
+        if 'llh_budget_coeff' in self.settings['opt'][job.oid]:
+            job.llh_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
+
+        # ----- Sampling
+        # Optimizers like SA use an initial sample to determine characteristics like starting temp
         if 'initial_sample' in self.settings['opt'][job.oid]:
             job.initial_sample = self.settings['opt'][job.oid]['initial_sample']
 
+        # ----- Population Size
+        # For optimizers like PSO and GA work with a defined population size. Depends on problem dimension and type
+        if job.type == 'combinatorial':
+            job.initial_pop_size = job.pid_cls.n * 2
+        else:
+            job.initial_pop_size = job.pid_cls.n * 3
+
+        # Define bit length for optimizers like GA that encode between real and binary
+        job.bit_computing = self.settings['gen']['bit_computing']
+
+        # Set computing resources like number of runs allocated and computational budget
+        job.runs_per_optimizer = self.settings['gen']['runs_per_optimizer']
+        job.comp_budget_base = self.settings['gen']['comp_budget_base']
+
+        # Problem class is instantiated here as dimension of problem determines allocated total budget
         cls = globals()[job.pid]
         job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
-        if job.type == 'combinatorial':
-            job.initial_candidate_size = job.pid_cls.n * 2
-        else:
-            job.initial_candidate_size = 5
+
+
+
 
         if 'number_parents' in self.settings['opt'][job.oid]:
             job.number_parents = self.settings['opt'][job.oid]['number_parents']
@@ -105,8 +143,12 @@ class Controller:
         else:
             job.pid_ub = self.settings['prb'][job.pid]['ub']
 
-        job.oid_lb = self.settings['opt'][job.oid]['lb']
-        job.oid_ub = self.settings['opt'][job.oid]['ub']
+        if 'lb' in self.settings['opt'][job.oid]:
+            job.oid_lb = self.settings['opt'][job.oid]['lb']
+
+        if 'ub' in self.settings['opt'][job.oid]:
+            job.oid_ub = self.settings['opt'][job.oid]['ub']
+
         cls = globals()[self.settings['opt'][job.oid]['optimizer']]
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
@@ -119,30 +161,43 @@ class Controller:
         if 'variator' in self.settings['opt'][job.oid]:
             job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
 
-        job.coeff_inertia = self.settings['prb'][job.pid]['coeff_inertia']
-        job.coeff_local = self.settings['prb'][job.pid]['coeff_local']
-        job.coeff_global = self.settings['prb'][job.pid]['coeff_global']
+        if 'inertia_coeff' in self.settings['prb'][job.pid]:
+            job.inertia_coeff = self.settings['prb'][job.pid]['inertia_coeff']
+
+        if 'local_coeff' in self.settings['prb'][job.pid]:
+            job.local_coeff = self.settings['prb'][job.pid]['local_coeff']
+
+        if 'global_coeff' in self.settings['prb'][job.pid]:
+            job.global_coeff = self.settings['prb'][job.pid]['global_coeff']
+
+        if 'decay' in self.settings['opt'][job.oid]:
+            job.decay = self.settings['opt'][job.oid]['decay']
+
+        if 'decay_coeff' in self.settings['opt'][job.oid]:
+            job.decay_coeff = self.settings['opt'][job.oid]['decay_coeff']
 
         return job
 
-    def get_enabled_problems(self):
+    def get_problems(self):
         problems = []
         for pid in self.settings['prb']:
-            if not self.settings['prb'][pid]['enabled']:
-                continue
             problems.append(pid)
         return problems
 
-    def get_enabled_optimizers(self):
+    def get_optimizers(self):
         optimizers = []
         for oid in self.settings['opt']:
-            if not self.settings['opt'][oid]['enabled']:
-                continue
             optimizers.append(oid)
         return optimizers
 
     def execute_jobs(self):
         for j in self.jobs:
+
+            if j.pid_enabled and j.oid_enabled:
+                pass
+            else:
+                continue
+
             j.start_time = time.time()
 
             # Execute optimizer configured number of times to sample problem results
@@ -151,7 +206,7 @@ class Controller:
             for r in range(j.runs_per_optimizer):
                 exec_start_time = time.time()
                 self.pre_processing(j)
-                j.oid_cls.run()
+                j.oid_cls.run(jobs=self.jobs)
                 j.end_time = time.time()
                 j.total_comp_time_s += time.time() - exec_start_time
 
@@ -190,32 +245,6 @@ class Controller:
 
         if j.initial_sample:
             j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
-
-    def optimize_problem(self, **kwargs):
-        problem, optimizer = self.make_components(**kwargs)
-
-        # Execute optimizer configured number of times to sample problem results
-        lg.msg(logging.INFO, 'Executing {} sample runs'.format(self.settings['gen']['runs_per_optimizer']))
-
-        total_cts = 0  # Total computational time in seconds
-        for i in range(self.settings['gen']['runs_per_optimizer']):
-
-            opt_run_start_time = time.time()
-
-            run_best, run_ft, _ = optimizer.run(budget=problem.budget['total'])  # Execute optimizer
-
-            total_cts += time.time() - opt_run_start_time  # Aggregate computational time this run to total
-
-            lg.msg(logging.INFO, 'Run {} best fitness is {} with permutation {}'.format(i, run_best.fitness, run_best.candidate))
-            self.log_optimizer_fitness(oid=kwargs['oid'], bcf=run_best.fitness, bcp=run_best.candidate)
-
-            self.vis.ft(run_ft)  # Plot run-specific trend
-
-        # Log optimizer average completion time seconds
-        self.settings['opt'][kwargs['oid']]['avg_cts'] = total_cts / self.settings['gen']['runs_per_optimizer']
-
-        # Execute problem-specific tasks upon optimization completion, for e.g. generate gantt chart of best schedule
-        problem.post_processing(oid=kwargs['oid'])
 
     def load_components(self):
         pass
