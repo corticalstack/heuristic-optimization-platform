@@ -1,6 +1,7 @@
 from random import Random
 from utilities.visualisation import Visualisation
 from optimizers.particle import Particle
+import pandas as pd
 from config.config import *
 import os
 import sys
@@ -28,8 +29,9 @@ class Controller:
     """
     Controller
     """
-    def __init__(self):
+    def __init__(self, results_path):
         lg.msg(logging.INFO, 'Initialising controller')
+        self.results_path = results_path
         self.random = Random()
         #self.random.seed(42)
         self.vis = Visualisation()
@@ -38,8 +40,8 @@ class Controller:
         self.problems = []
         self.optimizers = []
         self.jobs = self.set_jobs()
+
         self.budget = 0
-        self.no_benchmark = 'na'
 
     @staticmethod
     def get_config():
@@ -57,6 +59,11 @@ class Controller:
                 except yaml.YAMLError as e:
                     print(e)
         return _settings
+
+    @staticmethod
+    def write_to_csv(data, filename):
+        df = pd.DataFrame(data)
+        df.to_csv(filename, header=True, index=False)
 
     def set_jobs(self):
         jobs = []
@@ -269,14 +276,14 @@ class Controller:
 
     def summary(self):
         lg.msg(logging.INFO, 'Basic Statistics')
-        # need to show all optimzier trends per problem
+        summary = []
         for p in self.problems:
+            if not self.settings['prb'][p]['enabled']:
+                continue
             lg.msg(logging.INFO, 'Summary for {}'.format(p))
             gbest_ft = {}
             bdp = {}  # Bounds diff pct
             other = {}
-            if not self.settings['prb'][p]['enabled']:
-                continue
             for o in self.optimizers:
                 if not self.settings['opt'][o]['enabled']:
                     continue
@@ -292,9 +299,17 @@ class Controller:
                         bdp[j.oid] = [j.pid_lb_diff_pct, j.pid_ub_diff_pct]
             stats_summary = Stats.get_summary(gbest_ft)
             format_spec = "{:>15}" * 9
-            lg.msg(logging.INFO, format_spec.format('Optimiser', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev',
-                                                    'Wilcoxon', 'LB Diff %', 'UB Diff %', 'Avg Cts'))
+
+
+            cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB Diff %',
+                    'UB Diff %', 'Avg Cts']
+            summary.append(cols)
+            lg.msg(logging.INFO, format_spec.format(*cols))
+
             for k, v in stats_summary.items():
                 lg.msg(logging.INFO, format_spec.format(str(k), str(v['minf']), str(v['maxf']), str(v['mean']),
                                                         str(v['stdev']), str(v['wts']), str(bdp[k][0]), str(bdp[k][1]),
                                                         str(round(other[k]['avg_comp_time_s'], 3))))
+                summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
+                               str(bdp[k][0]), str(bdp[k][1]), str(round(other[k]['avg_comp_time_s'], 3))])
+            self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')

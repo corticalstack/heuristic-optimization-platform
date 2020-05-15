@@ -94,9 +94,10 @@ class FSSP(Problem):
 
     def jobs_times(self, permutation):
         total_idle_time = 0
-        _ = self.evaluator(permutation)
+        _ = self.evaluator(permutation)  # Evaluate best permutation to set machines
 
-        lg.msg(logging.INFO, 'Job\tStart Time\tFinish Time\tIdle Time')
+        format_spec = "{:>15}" * 4
+        lg.msg(logging.INFO, format_spec.format('Job', 'Start Time', 'Finish Time', 'Idle Time'))
         for pi, p in enumerate(permutation):
             start_time = 0
             end_time = 0
@@ -108,7 +109,7 @@ class FSSP(Problem):
                     continue
                 idle_time += j[pi][1] - end_time
                 end_time = j[pi][2]
-            lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}'.format(str(p), str(start_time), str(end_time), str(idle_time)))
+            lg.msg(logging.INFO, format_spec.format(str(p), str(start_time), str(end_time), str(idle_time)))
             total_idle_time += idle_time
         lg.msg(logging.INFO, 'Jobs total idle time is {}'.format(total_idle_time))
 
@@ -145,12 +146,13 @@ class FSSP(Problem):
     def machines_times(self, permutation):
         total_idle_time = 0
         _ = self.evaluator(permutation)
-        lg.msg(logging.INFO, 'Machine\tStart Time\tFinish Time\tIdle Time')
+        format_spec = "{:>15}" * 4
+        lg.msg(logging.INFO, format_spec.format('Machine', 'Start Time', 'Finish Time', 'Idle Time'))
 
         # Calculate idle time from list tuples as start time(m+1) - finish time(m). Include last machine start time
         for mi, m in enumerate(self.machines['assigned_jobs']):
             finish_time = m[-1][2]
             idle_time = sum([x[1]-x[0] for x in zip([x[2] for x in m], [x[1] for x in m[1:] + [(0, m[-1][2], 0)]])])
             total_idle_time += idle_time
-            lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}'.format(str(mi), str(m[0][1]), str(finish_time), str(idle_time)))
+            lg.msg(logging.INFO, format_spec.format(str(mi), str(m[0][1]), str(finish_time), str(idle_time)))
         lg.msg(logging.INFO, 'Machines total idle time is {}'.format(total_idle_time))
