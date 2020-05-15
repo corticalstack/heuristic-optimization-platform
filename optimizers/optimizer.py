@@ -118,17 +118,70 @@ class Optimizer:
     def n_sbox(self):
         pass
 
-    def one_point_crossover(self, parent0, parent1):
-        crossover_point = self.random.randint(1, (len(parent0) - 1))
+    def crossover_one_point(self, parent0, parent1):
         if self.hj.type == 'combinatorial':
-            child = parent0[:crossover_point]
+            cp = self.random.randint(1, (len(parent0) - 1))
+            child = parent0[:cp]
             for c in parent1:
                 if c not in child:
                     child.append(c)
         else:
             child = []
             for pi, p in enumerate(parent0):
-                cv = parent0[pi][:crossover_point] + parent1[pi][crossover_point:]
+                cp = self.random.randint(1, (len(p) - 1))
+                cv = parent0[pi][:cp] + parent1[pi][cp:]
+                child.append(cv)
+        return child
+
+    def crossover_two_point(self, parent0, parent1):
+        if self.hj.type == 'combinatorial':
+            cp = sorted(self.random.sample(range(1, len(parent0) - 1), 2))
+
+            # Take 2 slices from first parent and concatenate
+            child = parent0[0:cp[0]] + parent0[cp[1]:]
+
+            # List child missing genes, taking their order from second parent
+            from_parent1 = []
+            for c in parent1:
+                if c not in child:
+                    from_parent1.append(c)
+
+            # Insert required "genes" starting from cp idx
+            for gene in reversed(from_parent1):
+                child.insert(cp[0], gene)
+        else:
+            child = []
+            for pi, p in enumerate(parent0):
+                cp = sorted(self.random.sample(range(1, len(p) - 1), 2))
+                cv = parent0[pi][0:cp[0]] + parent1[pi][cp[0]:cp[1]] + parent0[pi][cp[1]:]
+                child.append(cv)
+        return child
+
+    def crossover_sbox(self, parent0, parent1):
+        if self.hj.type == 'combinatorial':
+            child = [-1] * len(parent0)
+            cp = self.random.randint(1, (len(parent0) - 1))
+            pi = 0
+            while pi < (len(parent0) - 1):
+                if parent0[pi:pi+2] == parent1[pi:pi+2]:
+                    child[pi:pi+2] = parent0[pi:pi+2]
+                    pi += 2
+                else:
+                    pi += 1
+            for ci, c in enumerate(parent0[0:cp]):
+                if c not in child:
+                    index = child.index(-1)
+                    child[index] = c
+            for ci, c in enumerate(parent1):
+                if c not in child:
+                    index = child.index(-1)
+                    child[index] = c
+        else:
+            ### JP need to refactor crossovers into embedded defs for comb/cont variations
+            child = []
+            for pi, p in enumerate(parent0):
+                cp = sorted(self.random.sample(range(1, len(p) - 1), 2))
+                cv = parent0[pi][0:cp[0]] + parent1[pi][cp[0]:cp[1]] + parent0[pi][cp[1]:]
                 child.append(cv)
         return child
 

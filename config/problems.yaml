@@ -1,7 +1,7 @@
 # Problem configuration
 
   FSSP:
-    enabled: False
+    enabled: True
     type: combinatorial
     description: Flow Shop Scheduling Problem
     benchmarks:
@@ -19,7 +19,7 @@
     local_coeff: 2.1
     global_coeff: 2.1
   RASTRIGIN:
-    enabled: True
+    enabled: False
     type: continuous
     description: Rastrigin
     lb: -5.12

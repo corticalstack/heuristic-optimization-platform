@@ -49,11 +49,13 @@ class HopJob:
         self.number_parents = 0
         self.number_children = 0
         self.initial_pop_size = 0
+        self.parent_gene_similarity_threshold = 0.0
 
-        # Solution generator and variator
+        # Solution generators, variator and crossover
         self.generator_comb = None
         self.generator_cont = None
         self.variator = None
+        self.crossover = None
 
         # Runtime stats
         self.rbest = Particle()

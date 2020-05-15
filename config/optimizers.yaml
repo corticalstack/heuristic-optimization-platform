@@ -1,7 +1,7 @@
 # Optimizers configuration
 
   SA:
-    enabled: True
+    enabled: False
     description: Simulated Annealing
     type: low
     optimizer: SA
@@ -12,7 +12,7 @@
     lb: null
     ub: null
   DE:
-    enabled: True
+    enabled: False
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA
@@ -22,7 +22,7 @@
     lb: 0
     ub: 4
   ES:
-    enabled: True
+    enabled: False
     description: Evoluation Strategy (Inspyred)
     type: low
     optimizer: ES
@@ -39,13 +39,15 @@
     generator_comb: discrete
     generator_cont: chromosome
     variator: n_exchange
+    crossover: sbox
     initial_sample: False
     lb: null
     ub: null
     number_parents: 2
     number_children: 10
+    parent_gene_similarity_threshold: 0.8
   PSO:
-    enabled: True
+    enabled: False
     description: Particle swarm
     type: low
     optimizer: PSO

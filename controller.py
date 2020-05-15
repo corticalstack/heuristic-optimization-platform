@@ -151,11 +151,14 @@ class Controller:
         if 'number_children' in self.settings['opt'][job.oid]:
             job.number_children = self.settings['opt'][job.oid]['number_children']
 
+        if 'parent_gene_similarity_threshold' in self.settings['opt'][job.oid]:
+            job.parent_gene_similarity_threshold = self.settings['opt'][job.oid]['parent_gene_similarity_threshold']
+
         # ----- Instantiate optimizer class
         cls = globals()[self.settings['opt'][job.oid]['optimizer']]
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
-        # ----- Generator (solution) and Variator (neighbour from solution) instantiation
+        # ----- Generator (solution), Variator (neighbour from solution) and Crossover (parent) instantiation
         if 'generator_comb' in self.settings['opt'][job.oid]:
             job.generator_comb = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator_comb'])
 
@@ -164,6 +167,9 @@ class Controller:
 
         if 'variator' in self.settings['opt'][job.oid]:
             job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
+
+        if 'crossover' in self.settings['opt'][job.oid]:
+            job.crossover = getattr(job.oid_cls, 'crossover_' + self.settings['opt'][job.oid]['crossover'])
 
         # ----- Various co-efficients
         if 'inertia_coeff' in self.settings['prb'][job.pid]:
