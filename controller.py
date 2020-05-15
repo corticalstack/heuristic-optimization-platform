@@ -35,8 +35,11 @@ class Controller:
         self.vis = Visualisation()
         self.settings = self.get_config()
         self.problems_optimizers = []
+        self.problems = []
+        self.optimizers = []
         self.jobs = self.set_jobs()
         self.budget = 0
+        self.no_benchmark = 'na'
 
     @staticmethod
     def get_config():
@@ -57,9 +60,9 @@ class Controller:
 
     def set_jobs(self):
         jobs = []
-        prob = self.get_problems()
-        opt = self.get_optimizers()
-        self.problems_optimizers = list(product(prob, opt))
+        self.problems = self.get_problems()
+        self.optimizers = self.get_optimizers()
+        self.problems_optimizers = list(product(self.problems, self.optimizers))
         self.problems_optimizers.sort()
 
         for (pid, oid) in self.problems_optimizers:
@@ -243,7 +246,7 @@ class Controller:
         self.summary()
 
     def pre_processing(self, j):
-        self.budget = j.budget
+        self.budget = j.budget  # Store computational budget allowance before it is consumed
         j.rft = []
         j.rbest = Particle()
         j.population = []
@@ -252,7 +255,7 @@ class Controller:
             j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
 
     def post_processing(self, j):
-        j.budget = self.budget
+        j.budget = self.budget  # Reinstate full computational budget for next job run
 
     def load_components(self):
         pass
@@ -267,19 +270,31 @@ class Controller:
     def summary(self):
         lg.msg(logging.INFO, 'Basic Statistics')
         # need to show all optimzier trends per problem
-        gft = {}
-        for j in self.jobs:
-            gft[j.pid] = {}
-            gft[j.pid][j.oid] = j.gft
-
-        for k, v in gft.items():
-            self.vis.fitness_trend_all_optimizers(v)
-            #summary = Stats.get_summary(v)
-            # optimizers[k]['avg_cts'], 'lb_diff_pct': optimizers[opt]['lb_diff_pct'], 'ub_diff_pct':
-            # optimizers[opt]['ub_diff_pct']}
-            # lg.msg(logging.INFO,
-            #        'Optimiser\tMin Fitness\tMax Fitness\tAvg Fitness\tStDev\tWilcoxon\tLB Diff %\tUB Diff %\tAvg Cts')
-            # for k, v in summary_results.items():
-            #     lg.msg(logging.INFO, '{}\t\t{}\t\t{}\t\t{}\t\t{}\t{}\t\t{}\t\t{}\t\t{}'.format(
-            #         str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
-            #         str(v['lb_diff_pct']), str(v['ub_diff_pct']), str(round(v['avg_cts'], 3))))
+        for p in self.problems:
+            lg.msg(logging.INFO, 'Summary for {}'.format(p))
+            gbest_ft = {}
+            bdp = {}  # Bounds diff pct
+            other = {}
+            if not self.settings['prb'][p]['enabled']:
+                continue
+            for o in self.optimizers:
+                if not self.settings['opt'][o]['enabled']:
+                    continue
+                for j in self.jobs:
+                    if not (j.pid == p and j.oid == o):
+                        continue
+                    gbest_ft[j.oid] = {}
+                    gbest_ft[j.oid] = j.gft
+                    bdp[j.oid] = {}
+                    other[j.oid] = {}
+                    other[j.oid]['avg_comp_time_s'] = j.avg_comp_time_s
+                    if j.bid != 'n/a':
+                        bdp[j.oid] = [j.pid_lb_diff_pct, j.pid_ub_diff_pct]
+            stats_summary = Stats.get_summary(gbest_ft)
+            format_spec = "{:>15}" * 9
+            lg.msg(logging.INFO, format_spec.format('Optimiser', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev',
+                                                    'Wilcoxon', 'LB Diff %', 'UB Diff %', 'Avg Cts'))
+            for k, v in stats_summary.items():
+                lg.msg(logging.INFO, format_spec.format(str(k), str(v['minf']), str(v['maxf']), str(v['mean']),
+                                                        str(v['stdev']), str(v['wts']), str(bdp[k][0]), str(bdp[k][1]),
+                                                        str(round(other[k]['avg_comp_time_s'], 3))))

@@ -35,6 +35,6 @@ class Stats:
         return summary_results
 
     @staticmethod
-    def taillard_compare(lb, ub, alg_fitness):
-        return round(((alg_fitness - lb) / lb) * 100, 2), round(((alg_fitness - ub) / ub) * 100, 2)
+    def bounds_compare(lb, ub, cf):
+        return round(((cf - lb) / lb) * 100, 2), round(((cf - ub) / ub) * 100, 2)
 

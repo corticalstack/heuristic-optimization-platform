@@ -1,7 +1,5 @@
 import logging
 from utilities import logger as lg
-import struct
-from optimizers.particle import Particle
 import copy
 
 
@@ -14,7 +12,7 @@ class Optimizer:
     def run(self, **kwargs):
         self.pre_processing(**kwargs)
         self.optimize()
-        self.post_processing()
+        self.post_processing(**kwargs)
 
     def get_generator(self):
         if self.hj.type == 'combinatorial':
@@ -204,25 +202,7 @@ class Optimizer:
         return child
 
     def pre_processing(self, **kwargs):
-        # self.hj.fitness_trend = []
-        #
-        # # Set global best single particle if passed
-        # #if 'gbest' in kwargs:
-        # #    self.gbest = kwargs['gbest']
-        # #else:
-        # self.hj.gbest = Particle()
-        #
-        # # Set population of particles if passed
-        # #if 'pop' in kwargs:
-        # #    self.population = kwargs['pop']
-        # #else:
-        # self.hj.population = []
-        #
-        # if self.hj.initial_sample:
-        #     self.hj.pid_cls.initial_sample = self.hj.pid_cls.generate_initial_sample()
-
         pass
 
-    def post_processing(self):
+    def post_processing(self, **kwargs):
         lg.msg(logging.DEBUG, 'Computational budget remaining is {}'.format(self.hj.budget))
-

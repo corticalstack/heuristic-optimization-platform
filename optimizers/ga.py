@@ -2,8 +2,6 @@ from optimizers.optimizer import Optimizer
 from optimizers.particle import Particle
 import logging
 from utilities import logger as lg
-import math
-import numpy as np
 import copy
 
 

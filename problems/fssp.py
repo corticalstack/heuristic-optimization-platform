@@ -2,8 +2,6 @@ from problems.problem import Problem
 import logging
 from utilities import logger as lg
 from utilities.stats import Stats
-import math
-import numpy as np
 
 
 class FSSP(Problem):
@@ -28,36 +26,6 @@ class FSSP(Problem):
         #self.machines_set_loadout_times()
         #self.machines_set_lower_bounds_taillard()
 
-    def pre_processing(self):
-        pass
-
-    def post_processing(self):
-        #bcp = self.cfg.settings['opt'][kwargs['oid']]['bcp']
-
-        self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.taillard_compare(self.ilb, self.iub, self.hj.gbest.fitness)
-
-        fitness, _ = self.evaluator(self.hj.gbest.candidate)  # set machine assigned jobs to best permutation
-        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs)
-
-        lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
-        self.machines_times(self.hj.gbest.candidate)
-
-        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, self.hj.gbest.candidate))
-        self.jobs_times(self.hj.gbest.candidate)
-
-    def load_instance(self):
-        filename = 'benchmarks/fssp/' + self.hj.bid
-        with open(filename, 'r') as f:
-            line = f.readlines()
-            for i, job_detail in enumerate(line):
-                job_detail = job_detail.strip('\n')
-                if i == 0:
-                    self.jobs['quantity'], self.machines['quantity'] = [int(n) for n in job_detail.split()]
-                elif i == 1:
-                    self.iub, self.ilb = [int(n) for n in job_detail.split()]
-                else:
-                    self.jobs_add(job_detail)
-
     def evaluator(self, candidate, budget=1):
         self.machines['assigned_jobs'] = []
         for i in range(0, self.machines['quantity']):
@@ -81,6 +49,34 @@ class FSSP(Problem):
 
         budget -= 1  # Evaluating has a computational cost so reduce budget
         return self.machines['assigned_jobs'][-1][-1][2], budget
+
+    def pre_processing(self):
+        pass
+
+    def post_processing(self):
+        self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.bounds_compare(self.ilb, self.iub, self.hj.gbest.fitness)
+
+        fitness, _ = self.evaluator(self.hj.gbest.candidate)  # set machine assigned jobs to best permutation
+        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs)
+
+        lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
+        self.machines_times(self.hj.gbest.candidate)
+
+        lg.msg(logging.INFO, 'Job times for best fitness of {} with permutation {}'.format(fitness, self.hj.gbest.candidate))
+        self.jobs_times(self.hj.gbest.candidate)
+
+    def load_instance(self):
+        filename = 'benchmarks/fssp/' + self.hj.bid
+        with open(filename, 'r') as f:
+            line = f.readlines()
+            for i, job_detail in enumerate(line):
+                job_detail = job_detail.strip('\n')
+                if i == 0:
+                    self.jobs['quantity'], self.machines['quantity'] = [int(n) for n in job_detail.split()]
+                elif i == 1:
+                    self.iub, self.ilb = [int(n) for n in job_detail.split()]
+                else:
+                    self.jobs_add(job_detail)
 
     def jobs_add(self, jobs):
         job_times = [int(n) for n in jobs.split()]
