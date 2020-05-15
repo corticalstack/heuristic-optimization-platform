@@ -154,6 +154,10 @@ class Controller:
         if 'parent_gene_similarity_threshold' in self.settings['opt'][job.oid]:
             job.parent_gene_similarity_threshold = self.settings['opt'][job.oid]['parent_gene_similarity_threshold']
 
+        # ----- Annealing
+        if 'reheat' in self.settings['opt'][job.oid]:
+            job.reheat = self.settings['opt'][job.oid]['reheat']
+
         # ----- Instantiate optimizer class
         cls = globals()[self.settings['opt'][job.oid]['optimizer']]
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer

@@ -38,7 +38,13 @@ class SA(Optimizer):
 
         self.temp = self.initial_temp
 
-        while self.hj.budget > 0 and (self.temp > self.temp_threshold):
+        while self.hj.budget > 0:
+            if self.temp < self.temp_threshold:
+                if self.hj.reheat:
+                    self.temp = self.initial_temp
+                else:
+                    break
+
             new_p = Particle()
 
             # If continuous problem generate new solution otherwise perturb current candidate combination

@@ -51,6 +51,9 @@ class HopJob:
         self.initial_pop_size = 0
         self.parent_gene_similarity_threshold = 0.0
 
+        # Annealing
+        self.reheat = False
+
         # Solution generators, variator and crossover
         self.generator_comb = None
         self.generator_cont = None

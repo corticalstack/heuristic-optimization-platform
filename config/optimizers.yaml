@@ -1,7 +1,7 @@
 # Optimizers configuration
 
   SA:
-    enabled: False
+    enabled: True
     description: Simulated Annealing
     type: low
     optimizer: SA
@@ -11,6 +11,7 @@
     initial_sample: True
     lb: null
     ub: null
+    reheat: True
   DE:
     enabled: False
     description: Differential Evolution (Inspyred)
@@ -32,7 +33,7 @@
     lb: 0
     ub: 4
   GA:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
