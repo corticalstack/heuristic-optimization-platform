@@ -57,7 +57,8 @@ class FSSP(Problem):
         self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.bounds_compare(self.ilb, self.iub, self.hj.gbest.fitness)
 
         fitness, _ = self.evaluator(self.hj.gbest.candidate)  # set machine assigned jobs to best permutation
-        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs)
+        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs, self.hj.results_path + '/' +
+                                               self.hj.pid + ' ' + self.hj.oid + ' gbest Gantt chart')
 
         lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
         self.machines_times(self.hj.gbest.candidate)

@@ -11,9 +11,9 @@
     initial_sample: True
     lb: null
     ub: null
-    reheat: True
+    reheat: False
   DE:
-    enabled: False
+    enabled: True
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA

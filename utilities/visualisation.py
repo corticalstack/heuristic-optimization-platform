@@ -13,22 +13,26 @@ class Visualisation:
         pass
 
     @staticmethod
-    def fitness_trend(trend):
+    def fitness_trend(trend, filename):
         df_ft = pd.DataFrame(trend)
         g = sns.relplot(kind="line", data=df_ft)
-        plt.show()
+        plt.savefig(fname=filename + '.png', dpi=300, format='png')
+        plt.close()
+        #plt.show()
 
     @staticmethod
-    def fitness_trend_all_optimizers(trends):
+    def fitness_trend_all_optimizers(trends, filename):
         df_ft = pd.DataFrame()
         for k, v, in trends.items():
             df_ft[k] = v
 
         if not df_ft.empty:
             g = sns.relplot(kind="line", data=df_ft, dashes=False)
-            plt.show()
+            plt.savefig(fname=filename + '.png', dpi=300, format='png')
+            plt.close()
+            #plt.show()
 
-    def solution_representation_gantt(self, fitness, machines, jobs):
+    def solution_representation_gantt(self, fitness, machines, jobs, filename):
         x_width = fitness
         if jobs['quantity'] <= 20:
             x_width += 280  # Build in margin for legend
@@ -92,7 +96,9 @@ class Visualisation:
         if jobs['quantity'] > 20:
             ax.legend().set_visible(False)
 
-        plt.show()
+        plt.savefig(fname=filename + '.png', dpi=300, format='png')
+        plt.close()
+        #plt.show()
 
     # Colormap generation courtesy of
     # https://stackoverflow.com/questions/42697933/colormap-with-maximum-distinguishable-colours

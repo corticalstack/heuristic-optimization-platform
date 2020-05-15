@@ -4,6 +4,8 @@ from optimizers.particle import Particle
 class HopJob:
     def __init__(self):
         self.step = 0
+        self.run = 0
+        self.results_path = None
 
         # Problem, optimizer, benchmark and type
         self.pid = None

@@ -61,9 +61,9 @@ class Controller:
         return _settings
 
     @staticmethod
-    def write_to_csv(data, filename):
+    def write_to_csv(data, filename, header=True):
         df = pd.DataFrame(data)
-        df.to_csv(filename, header=True, index=False)
+        df.to_csv(filename, header=header, index=False)
 
     def set_jobs(self):
         jobs = []
@@ -88,6 +88,9 @@ class Controller:
     def create_job_spec(self, *args):
         # Create new job specification
         job = HopJob()
+
+        # Persisting directory to support problem specific processing like saving Gantt charts
+        job.results_path = self.results_path
 
         # ----- Assign problem, optimizer, benchmark and type
         job.pid, job.oid, job.bid = args
@@ -231,6 +234,7 @@ class Controller:
             for r in range(j.runs_per_optimizer):
                 exec_start_time = time.time()
                 self.pre_processing(j)
+                j.run = r
                 j.oid_cls.run(jobs=self.jobs)
                 self.post_processing(j)
                 j.end_time = time.time()
@@ -242,7 +246,9 @@ class Controller:
                 lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(r, "{:.10f}".format(j.rbest.fitness), j.rbest.candidate))
                 self.log_optimizer_fitness(j)
 
-                self.vis.fitness_trend(j.rft)  # Plot run-specific trend
+                filename = self.results_path + '/' + j.pid + ' ' + j.oid + ' rbest fitness trend run ' + str(r)
+                self.vis.fitness_trend(j.rft, filename)  # Plot run-specific trend
+                self.write_to_csv(j.rft, filename + '.csv', header=False)
 
             j.end_time = time.time()
             j.avg_comp_time_s = j.total_comp_time_s / j.runs_per_optimizer
@@ -266,7 +272,6 @@ class Controller:
 
     def load_components(self):
         pass
-        # load components
 
     def log_optimizer_fitness(self, j):
         if j.rbest.fitness < j.gbest.fitness:
@@ -300,7 +305,6 @@ class Controller:
             stats_summary = Stats.get_summary(gbest_ft)
             format_spec = "{:>15}" * 9
 
-
             cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB Diff %',
                     'UB Diff %', 'Avg Cts']
             summary.append(cols)
@@ -312,4 +316,11 @@ class Controller:
                                                         str(round(other[k]['avg_comp_time_s'], 3))))
                 summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
                                str(bdp[k][0]), str(bdp[k][1]), str(round(other[k]['avg_comp_time_s'], 3))])
+
+            # Summart per problem
             self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
+
+            # Fitness trend for all optimizers per problem
+            filename =  self.results_path + '/' + p + ' all optimizers gbest fitness trend'
+            self.vis.fitness_trend_all_optimizers(gbest_ft, filename)
+            self.write_to_csv(gbest_ft, filename + '.csv')
