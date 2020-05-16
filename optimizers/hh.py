@@ -34,7 +34,7 @@ class HH(Hyper):
             #print('Run best is ', self.low_level_heuristics[llh].rbest.fitness, ' with candidate ', self.low_level_heuristics[llh].rbest.candidate, ' by ', self.low_level_heuristics[llh].oid)
             #print('Global best is ', self.hj.gbest.fitness)
 
-            self.hj.budget -= self.hj.llh_budget
+            self.hj.budget = int(self.hj.budget - self.hj.llh_budget)
 
             if self.low_level_heuristics[llh].rbest.fitness < self.hj.rbest.fitness:
                 print('Inserting fitness into archive {} by {}'.format( self.low_level_heuristics[llh].rbest.fitness, self.low_level_heuristics[llh].oid))

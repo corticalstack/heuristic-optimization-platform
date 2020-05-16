@@ -22,9 +22,7 @@ class FSSP(Problem):
         # Set n dimensions
         self.n = self.jobs['quantity']
 
-        #self.jobs_set_total_units()
-        #self.machines_set_loadout_times()
-        #self.machines_set_lower_bounds_taillard()
+        self.pre_processing_done = False
 
     def evaluator(self, candidate, budget=1):
         self.machines['assigned_jobs'] = []
@@ -51,7 +49,11 @@ class FSSP(Problem):
         return self.machines['assigned_jobs'][-1][-1][2], budget
 
     def pre_processing(self):
-        pass
+        if not self.pre_processing_done:
+            self.jobs_set_total_units()
+            self.machines_set_loadout_times()
+            self.machines_set_lower_bounds_taillard()
+            self.pre_processing_done = True
 
     def post_processing(self):
         self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.bounds_compare(self.ilb, self.iub, self.hj.gbest.fitness)
@@ -94,11 +96,15 @@ class FSSP(Problem):
                 lg.msg(logging.DEBUG, 'Job {} allocated {} time units'.format(ji, j))
 
     def jobs_times(self, permutation):
+        jt = []
         total_idle_time = 0
         _ = self.evaluator(permutation)  # Evaluate best permutation to set machines
 
+        cols = ['Job', 'Start Time', 'Finish Time', 'Idle Time']
+        jt.append(cols)
+
         format_spec = "{:>15}" * 4
-        lg.msg(logging.INFO, format_spec.format('Job', 'Start Time', 'Finish Time', 'Idle Time'))
+        lg.msg(logging.INFO, format_spec.format(*cols))
         for pi, p in enumerate(permutation):
             start_time = 0
             end_time = 0
@@ -111,8 +117,11 @@ class FSSP(Problem):
                 idle_time += j[pi][1] - end_time
                 end_time = j[pi][2]
             lg.msg(logging.INFO, format_spec.format(str(p), str(start_time), str(end_time), str(idle_time)))
+            jt.append([str(p), str(start_time), str(end_time), str(idle_time)])
             total_idle_time += idle_time
         lg.msg(logging.INFO, 'Jobs total idle time is {}'.format(total_idle_time))
+        self.write_to_csv(jt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' jobs times run ' +
+                          str(self.hj.run) + '.csv', header=True)
 
     def machines_set_loadout_times(self):
         for m in range(self.machines['quantity']):
@@ -141,19 +150,26 @@ class FSSP(Problem):
             max(self.machines['lower_bounds_taillard'])))
 
         if max(self.machines['lower_bounds_taillard']) != self.ilb:
-            lg.msg(logging.WARNING, 'Calculated Taillard instance benchmark ({}) != lb in benchmark instance file '
-                                        '({})'.format(max(self.machines['lower_bounds_taillard']), self.ilb))
+            lg.msg(logging.WARNING, 'Calculated Taillard instance benchmark ({}) != lb in benchmark instance file ' 
+                                    '({})'.format(max(self.machines['lower_bounds_taillard']), self.ilb))
 
     def machines_times(self, permutation):
+        mt = []
         total_idle_time = 0
         _ = self.evaluator(permutation)
-        format_spec = "{:>15}" * 4
-        lg.msg(logging.INFO, format_spec.format('Machine', 'Start Time', 'Finish Time', 'Idle Time'))
 
+        cols = ['Machine', 'Start Time', 'Finish Time', 'Idle Time']
+        mt.append(cols)
+
+        format_spec = "{:>15}" * 4
+        lg.msg(logging.INFO, format_spec.format(*cols))
         # Calculate idle time from list tuples as start time(m+1) - finish time(m). Include last machine start time
         for mi, m in enumerate(self.machines['assigned_jobs']):
             finish_time = m[-1][2]
             idle_time = sum([x[1]-x[0] for x in zip([x[2] for x in m], [x[1] for x in m[1:] + [(0, m[-1][2], 0)]])])
             total_idle_time += idle_time
             lg.msg(logging.INFO, format_spec.format(str(mi), str(m[0][1]), str(finish_time), str(idle_time)))
+            mt.append([str(mi), str(m[0][1]), str(finish_time), str(idle_time)])
         lg.msg(logging.INFO, 'Machines total idle time is {}'.format(total_idle_time))
+        self.write_to_csv(mt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' machines times run ' +
+                          str(self.hj.run) + '.csv', header=True)

@@ -1,7 +1,7 @@
 import logging
 from utilities.visualisation import Visualisation
 import numpy as np
-
+import pandas as pd
 
 class Problem:
     """
@@ -15,6 +15,17 @@ class Problem:
         self.logger = logging.getLogger()
         self.n = 0
 
+    @staticmethod
+    def write_to_csv(data, filename, header=True):
+        df = pd.DataFrame(data)
+        df.to_csv(filename, header=header, index=False)
+
+    @staticmethod
+    def candidate_spv_continuous_to_discrete(c):
+        # Get smallest position value
+        spv = sorted(range(len(c)), key=lambda i: c[i], reverse=False)
+        return spv
+
     def pre_processing(self):
         pass  # Placeholder
 
@@ -25,12 +36,6 @@ class Problem:
         candidate = list(range(0, self.n))
         np.random.shuffle(candidate)
         return candidate
-
-    @staticmethod
-    def candidate_spv_continuous_to_discrete(c):
-        # Get smallest position value
-        spv = sorted(range(len(c)), key=lambda i: c[i], reverse=False)
-        return spv
 
     def candidate_spv_discrete_to_continuous(self, *args):
         candidate, pos_min, pos_max = args

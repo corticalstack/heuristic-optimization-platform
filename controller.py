@@ -131,7 +131,7 @@ class Controller:
             job.llh_sample_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
 
         if 'llh_budget_coeff' in self.settings['opt'][job.oid]:
-            job.llh_budget = self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget
+            job.llh_budget = int(self.settings['opt'][job.oid]['llh_sample_budget_coeff'] * job.budget)
 
         # ----- Binary Encoding
         # Define bit length for optimizers like GA that encode between real and binary
@@ -238,10 +238,11 @@ class Controller:
 
             for r in range(j.runs_per_optimizer):
                 exec_start_time = time.time()
-                self.pre_processing(j)
                 j.run = r
+                self.pre_processing(j)  # Controller pre-processing
+                j.pid_cls.pre_processing()  # Problem pre-processing
                 j.oid_cls.run(jobs=self.jobs)
-                self.post_processing(j)
+                self.post_processing(j, r)
                 j.end_time = time.time()
                 j.total_comp_time_s += time.time() - exec_start_time
 
@@ -272,7 +273,9 @@ class Controller:
         if j.initial_sample:
             j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
 
-    def post_processing(self, j):
+    def post_processing(self, j, r):
+        if r == j.runs_per_optimizer -1:
+            return
         j.budget = self.budget  # Reinstate full computational budget for next job run
 
     def load_components(self):
@@ -306,6 +309,7 @@ class Controller:
                     other[j.oid] = {}
                     other[j.oid]['avg_comp_time_s'] = j.avg_comp_time_s
                     other[j.oid]['budget'] = j.budget_total
+                    other[j.oid]['budget_rem'] = j.budget
                     if j.iter_last_imp:
                         other[j.oid]['avg_iter_last_imp'] = int(statistics.mean(j.iter_last_imp))
                     else:
@@ -317,26 +321,42 @@ class Controller:
                         other[j.oid]['budget_no_imp_pct'] = 'n/a'
                     other[j.oid]['imp_count'] = j.imp_count
                     if j.bid != 'n/a':
-                        bdp[j.oid] = [j.pid_lb_diff_pct, j.pid_ub_diff_pct]
+                        bdp[j.oid] = [j.pid_cls.ilb, j.pid_lb_diff_pct, j.pid_cls.iub, j.pid_ub_diff_pct]
+                    else:
+                        bdp[j.oid] = [['n/a'] * 4]
             stats_summary = Stats.get_summary(gbest_ft)
 
-            format_spec = "{:>20}" * 13
+            format_spec = "{:>20}" * 16
 
-            cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB Diff %',
-                    'UB Diff %', 'Avg Cts', 'Budget', 'Avg Iter Last Imp', 'Budget No Imp %', 'Imp Count']
+            cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB', 'LB Diff %',
+                    'UB', 'UB Diff %', 'Avg Cts', 'Budget', 'Budget Rem', 'Avg Iter Last Imp', 'Budget No Imp %',
+                    'Imp Count']
             summary.append(cols)
             lg.msg(logging.INFO, format_spec.format(*cols))
 
             for k, v in stats_summary.items():
-                lg.msg(logging.INFO, format_spec.format(str(k), str(v['minf']), str(v['maxf']), str(v['mean']),
-                                                        str(v['stdev']), str(v['wts']), str(bdp[k][0]), str(bdp[k][1]),
-                                                        str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'],
-                                                        other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']))
+                lg.msg(logging.INFO, format_spec.format(str(k),
+                                                        str(v['minf']),
+                                                        str(v['maxf']),
+                                                        str(v['mean']),
+                                                        str(v['stdev']),
+                                                        str(v['wts']),
+                                                        str(bdp[k][0]),
+                                                        str(bdp[k][1]),
+                                                        str(bdp[k][2]),
+                                                        str(bdp[k][3]),
+                                                        str(round(other[k]['avg_comp_time_s'], 3)),
+                                                        other[k]['budget'],
+                                                        other[k]['budget_rem'],
+                                                        other[k]['avg_iter_last_imp'],
+                                                        other[k]['budget_no_imp_pct'],
+                                                        other[k]['imp_count']))
                 summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
-                               str(bdp[k][0]), str(bdp[k][1]), str(round(other[k]['avg_comp_time_s'], 3)),
-                                other[k]['budget'], other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
+                               str(bdp[k][0]), str(bdp[k][1]), str(bdp[k][2]), str(bdp[k][3]),
+                                str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'], other[k]['budget_rem'],
+                                other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
 
-            # Summart per problem
+            # Summary per problem
             self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
 
             # Fitness trend for all optimizers per problem
