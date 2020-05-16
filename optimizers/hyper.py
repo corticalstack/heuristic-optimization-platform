@@ -18,14 +18,15 @@ class Hyper(Optimizer):
         self.jobs = []
 
     def pre_processing(self, **kwargs):
+        Optimizer.pre_processing(self, **kwargs)
         self.jobs = kwargs['jobs']
         self.import_low_level_heuristics()
         self.llh_fitness = [[] for i in range(self.llh_total)]
         self.llh_candidates = [[] for i in range(self.llh_total)]
         self.llh_exec = [[] for i in range(self.llh_total)]
 
-    def post_processing(self):
-        Optimizer.post_processing(self)
+    def post_processing(self, **kwargs):
+        Optimizer.post_processing(self, **kwargs)
         print('Finished with best of ', self.hj.rbest.fitness)
         for k, v in self.low_level_heuristics.items():
             print('Llh {} executed {} times and with aggregated improvements of {}'.format(v.oid, v.llh_oid_run_count, v.llh_oid_aggr_imp))

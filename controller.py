@@ -321,6 +321,6 @@ class Controller:
             self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
 
             # Fitness trend for all optimizers per problem
-            filename =  self.results_path + '/' + p + ' all optimizers gbest fitness trend'
+            filename = self.results_path + '/' + p + ' all optimizers gbest fitness trend'
             self.vis.fitness_trend_all_optimizers(gbest_ft, filename)
             self.write_to_csv(gbest_ft, filename + '.csv')

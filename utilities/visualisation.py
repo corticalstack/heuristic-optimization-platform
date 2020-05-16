@@ -14,8 +14,14 @@ class Visualisation:
 
     @staticmethod
     def fitness_trend(trend, filename):
-        df_ft = pd.DataFrame(trend)
-        g = sns.relplot(kind="line", data=df_ft)
+        df_ft = pd.DataFrame(trend, columns=['Fitness'])
+        df_ft['Generation'] = np.arange(len(df_ft))
+        g = sns.relplot(kind="line", x="Generation", y="Fitness", data=df_ft)
+
+        # Get access to matplotlib control via g.axes
+        axes = g.axes.flatten()
+        axes[0].tick_params(axis='both', which='major', labelsize=7)
+
         plt.savefig(fname=filename + '.png', dpi=300, format='png')
         plt.close()
         #plt.show()
@@ -24,10 +30,21 @@ class Visualisation:
     def fitness_trend_all_optimizers(trends, filename):
         df_ft = pd.DataFrame()
         for k, v, in trends.items():
+            max_generations = len(v)
             df_ft[k] = v
 
         if not df_ft.empty:
             g = sns.relplot(kind="line", data=df_ft, dashes=False)
+
+            # Get access to matplotlib control via g.axes
+            axes = g.axes.flatten()
+            axes[0].tick_params(axis='both', which='major', labelsize=7)
+
+            axes[0].set_xlabel('Run')
+            axes[0].set_ylabel('Fitness')
+            major_ticks = np.arange(0, max_generations, 1)
+            axes[0].set_xticks(major_ticks)
+
             plt.savefig(fname=filename + '.png', dpi=300, format='png')
             plt.close()
             #plt.show()
