@@ -43,6 +43,7 @@ class GA(Optimizer):
                 self.hj.rbest.fitness = self.hj.population[0].fitness
                 self.hj.rbest.candidate = self.hj.population[0].candidate
                 self.hj.rft.append(self.hj.population[0].fitness)
+                self.hj.ili.append(self.hj.budget_total - self.hj.budget)
 
             self.parents = self.parent_selection()
 

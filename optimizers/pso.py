@@ -61,6 +61,7 @@ class PSO(Optimizer):
                 if c.fitness < self.hj.rbest.fitness:
                     self.set_rbest(c)
                     self.hj.rft.append(c.fitness)
+                    self.hj.ili.append(self.hj.budget_total - self.hj.budget)
 
     def reset_inherited_population_attr(self):
         for c in self.hj.population:

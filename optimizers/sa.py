@@ -64,6 +64,7 @@ class SA(Optimizer):
                                                                                         new_p.fitness))
                 self.hj.rbest = copy.deepcopy(new_p)
                 self.hj.rft.append(self.hj.rbest.fitness)
+                self.hj.ili.append(self.hj.budget_total - self.hj.budget)
 
             self.temp *= self.cooling_rate
 

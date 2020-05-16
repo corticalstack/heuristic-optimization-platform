@@ -19,6 +19,7 @@ from optimizers.pso import PSO
 from optimizers.hh import HH
 from hopjob import HopJob
 import time
+import statistics
 
 script_name = os.path.basename(sys.argv[0]).split('.')
 
@@ -117,6 +118,7 @@ class Controller:
         cls = globals()[job.pid]
         job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
+        job.budget_total = job.budget
 
         # Set low-level heuristic sampling and computational budget
         if 'llh_sample_runs' in self.settings['opt'][job.oid]:
@@ -300,22 +302,36 @@ class Controller:
                     bdp[j.oid] = {}
                     other[j.oid] = {}
                     other[j.oid]['avg_comp_time_s'] = j.avg_comp_time_s
+                    other[j.oid]['budget'] = j.budget_total
+                    if j.ili:
+                        other[j.oid]['avg_iter_last_imp'] = int(statistics.mean(j.ili))
+                    else:
+                        other[j.oid]['avg_iter_last_imp'] = 'n/a'
+
+                    if other[j.oid]['avg_iter_last_imp'] != 'n/a':
+                        other[j.oid]['budget_no_imp_pct'] = round(((j.budget_total - other[j.oid]['avg_iter_last_imp']) / j.budget_total) * 100, 2)
+                    else:
+                        other[j.oid]['budget_no_imp_pct'] = 'n/a'
+
                     if j.bid != 'n/a':
                         bdp[j.oid] = [j.pid_lb_diff_pct, j.pid_ub_diff_pct]
             stats_summary = Stats.get_summary(gbest_ft)
-            format_spec = "{:>15}" * 9
+
+            format_spec = "{:>20}" * 12
 
             cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB Diff %',
-                    'UB Diff %', 'Avg Cts']
+                    'UB Diff %', 'Avg Cts', 'Budget', 'Avg Iter Last Imp', 'Budget No Imp %']
             summary.append(cols)
             lg.msg(logging.INFO, format_spec.format(*cols))
 
             for k, v in stats_summary.items():
                 lg.msg(logging.INFO, format_spec.format(str(k), str(v['minf']), str(v['maxf']), str(v['mean']),
                                                         str(v['stdev']), str(v['wts']), str(bdp[k][0]), str(bdp[k][1]),
-                                                        str(round(other[k]['avg_comp_time_s'], 3))))
+                                                        str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'],
+                                                        other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct']))
                 summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
-                               str(bdp[k][0]), str(bdp[k][1]), str(round(other[k]['avg_comp_time_s'], 3))])
+                               str(bdp[k][0]), str(bdp[k][1]), str(round(other[k]['avg_comp_time_s'], 3)),
+                                other[k]['budget'], other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct']])
 
             # Summart per problem
             self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')

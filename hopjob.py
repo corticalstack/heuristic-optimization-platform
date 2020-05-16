@@ -30,7 +30,8 @@ class HopJob:
         # Computational Budget
         self.runs_per_optimizer = 0
         self.comp_budget_base = 0
-        self.budget = 0
+        self.budget = 0  # Budget that is consumed
+        self.budget_total = 0  # Persists total allocated budget, used to calculate last iteration improvement etc
 
         # Binary Encoding
         self.bit_computing = 16
@@ -73,6 +74,7 @@ class HopJob:
         self.end_time = 0
         self.total_comp_time_s = 0
         self.avg_comp_time_s = 0
+        self.ili = []  # Iteration of last improvement
 
         # Various co-efficients
         self.sample_size_coeff = 0.01  # Usually used as n dim * (budget * sample size coeff)
