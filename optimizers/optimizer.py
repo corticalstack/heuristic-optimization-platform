@@ -15,7 +15,7 @@ class Optimizer:
         self.post_processing(**kwargs)
 
     def get_generator(self):
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             return self.hj.generator_comb
         else:
             return self.hj.generator_cont
@@ -25,6 +25,7 @@ class Optimizer:
         float_vals = []
         for b in binary:
             fv = float(int(''.join([str(i) for i in b]), 2))
+
             # Rescale float within lower and upper bounds of
             fv = fv / (2 ** self.hj.bit_computing - 1) * (self.hj.pid_ub - self.hj.pid_lb) + self.hj.pid_lb
             float_vals.append(fv)
@@ -40,7 +41,7 @@ class Optimizer:
             return _c
 
         candidate = copy.deepcopy(candidate)
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             candidate = _exchange(candidate)
         else:
             for c in candidate:
@@ -60,7 +61,7 @@ class Optimizer:
             return _c
 
         candidate = copy.deepcopy(candidate)
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             candidate = _exchange_adjacent(candidate)
         else:
             for c in candidate:
@@ -80,7 +81,7 @@ class Optimizer:
             return _c
 
         candidate = copy.deepcopy(candidate)
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             candidate = _remove_insert(candidate)
         else:
             for c in candidate:
@@ -100,7 +101,7 @@ class Optimizer:
             return _c
 
         candidate = copy.deepcopy(candidate)
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             candidate = _to_first(candidate)
         else:
             for c in candidate:
@@ -108,7 +109,7 @@ class Optimizer:
         return candidate
 
     def crossover_one_point(self, parent0, parent1):
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             cp = self.random.randint(1, (len(parent0) - 1))
             child = parent0[:cp]
             # Add missing genes from second parent
@@ -125,7 +126,7 @@ class Optimizer:
         return child
 
     def crossover_two_point(self, parent0, parent1):
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             cp = sorted(self.random.sample(range(1, len(parent0) - 1), 2))
 
             # Take 2 slices from first parent and concatenate
@@ -150,7 +151,7 @@ class Optimizer:
         return child
 
     def crossover_sbox(self, parent0, parent1):
-        if self.hj.type == 'combinatorial':
+        if self.hj.pid_type == 'combinatorial':
             child = [-1] * len(parent0)
             cp = self.random.randint(1, (len(parent0) - 1))
             pi = 0
@@ -205,4 +206,4 @@ class Optimizer:
         pass
 
     def post_processing(self, **kwargs):
-        lg.msg(logging.DEBUG, 'Computational budget remaining is {}'.format(self.hj.budget))
+        pass

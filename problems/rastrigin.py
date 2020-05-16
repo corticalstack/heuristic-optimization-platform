@@ -30,5 +30,5 @@ class RASTRIGIN(Problem):
 
     def evaluator(self, candidate, budget=1):
         fitness = []
-        budget -=1
+        budget -= 1
         return sum([x**2 - 10 * math.cos(2 * math.pi * x) + 10 for x in candidate]), budget

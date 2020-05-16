@@ -48,7 +48,7 @@ class SA(Optimizer):
             new_p = Particle()
 
             # If continuous problem generate new solution otherwise perturb current candidate combination
-            if self.hj.type == 'continuous':
+            if self.hj.pid_type == 'continuous':
                 new_p.candidate = self.get_generator()(lb=self.hj.pid_lb, ub=self.hj.pid_ub)
             else:
                 new_p.candidate = self.hj.variator(self.hj.rbest.candidate)

@@ -2,8 +2,6 @@ from optimizers.optimizer import Optimizer
 from optimizers.particle import Particle
 import logging
 from utilities import logger as lg
-from importlib import import_module
-import copy
 import collections
 
 
@@ -21,22 +19,22 @@ class Hyper(Optimizer):
         Optimizer.pre_processing(self, **kwargs)
         self.jobs = kwargs['jobs']
         self.import_low_level_heuristics()
-        self.llh_fitness = [[] for i in range(self.llh_total)]
-        self.llh_candidates = [[] for i in range(self.llh_total)]
-        self.llh_exec = [[] for i in range(self.llh_total)]
+        self.llh_fitness = [[] for _ in range(self.llh_total)]
+        self.llh_candidates = [[] for _ in range(self.llh_total)]
+        self.llh_exec = [[] for _ in range(self.llh_total)]
 
     def post_processing(self, **kwargs):
         Optimizer.post_processing(self, **kwargs)
-        print('Finished with best of ', self.hj.rbest.fitness)
+        lg.msg(logging.INFO, 'Hyper heuristic finished with best of {}'.format(self.hj.rbest.fitness))
         for k, v in self.low_level_heuristics.items():
-            print('Llh {} executed {} times and with aggregated improvements of {}'.format(v.oid, v.llh_oid_run_count, v.llh_oid_aggr_imp))
+            lg.msg(logging.INFO, 'Low-level heuristic {} executed {} times with aggregated improvements of {}'.format(
+                v.oid, v.llh_oid_run_count, v.llh_oid_aggr_imp))
 
     def best_candidate_from_pool(self):
         best = min((min((v, c) for c, v in enumerate(row)), r) for r, row in enumerate(self.llh_fitness))
         bcf = self.llh_fitness[best[1]][best[0][1]]
         bc = self.llh_candidates[best[1]][best[0][1]]
         bcllh = best[1]
-        #print('{} set best fitness {} with candidate {}'.format(self.low_level_heuristics[bcllh].oid, bcf, bc))
         return bcf, bc, bcllh
 
     def set_rbest(self, bcf, bc):

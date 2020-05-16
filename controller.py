@@ -41,8 +41,7 @@ class Controller:
         self.problems = []
         self.optimizers = []
         self.jobs = self.set_jobs()
-
-        self.budget = 0
+        self.exec_start_time = 0
 
     @staticmethod
     def get_config():
@@ -95,7 +94,11 @@ class Controller:
 
         # ----- Assign problem, optimizer, benchmark and type
         job.pid, job.oid, job.bid = args
-        job.type = self.settings['prb'][job.pid]['type']
+        job.pid_type = self.settings['prb'][job.pid]['type']
+        job.pid_desc = self.settings['prb'][job.pid]['description']
+
+        job.oid_type = self.settings['opt'][job.oid]['type']
+        job.oid_desc = self.settings['opt'][job.oid]['description']
 
         # ----- Active components
         # Flags indicating problem and optimizer are active. We still build job spec for optimizer, as it may be
@@ -158,7 +161,7 @@ class Controller:
 
         # ----- Population
         # For optimizers like PSO and GA that work with a defined population size, depends on problem dimension and type
-        if job.type == 'combinatorial':
+        if job.pid_type == 'combinatorial':
             job.initial_pop_size = job.pid_cls.n * 2
         else:
             job.initial_pop_size = job.pid_cls.n * 3
@@ -233,30 +236,16 @@ class Controller:
 
             j.start_time = time.time()
 
-            # Execute optimizer configured number of times to sample problem results
+            lg.msg(logging.INFO, 'Optimizing {} with optimizer {}'.format(j.pid_desc, j.oid))
             lg.msg(logging.INFO, 'Executing {} sample runs'.format(j.runs_per_optimizer))
 
             for r in range(j.runs_per_optimizer):
-                exec_start_time = time.time()
                 j.run = r
                 self.pre_processing(j)  # Controller pre-processing
                 j.pid_cls.pre_processing()  # Problem pre-processing
-                j.oid_cls.run(jobs=self.jobs)
-                self.post_processing(j, r)
-                j.end_time = time.time()
-                j.total_comp_time_s += time.time() - exec_start_time
+                j.oid_cls.run(jobs=self.jobs)  # Execute optimizer
+                self.post_processing(j)  # Controller post-processing
 
-                if isinstance(j.rbest.candidate[0], float) and j.type == 'combinatorial':
-                    j.rbest.candidate = j.pid_cls.candidate_spv_continuous_to_discrete(j.rbest.candidate)
-
-                lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(r, "{:.10f}".format(j.rbest.fitness), j.rbest.candidate))
-                self.log_optimizer_fitness(j)
-
-                filename = self.results_path + '/' + j.pid + ' ' + j.oid + ' rbest fitness trend run ' + str(r)
-                self.vis.fitness_trend(j.rft, filename)  # Plot run-specific trend
-                self.write_to_csv(j.rft, filename + '.csv', header=False)
-
-            j.end_time = time.time()
             j.avg_comp_time_s = j.total_comp_time_s / j.runs_per_optimizer
 
             # Execute problem-specific tasks upon optimization completion e.g. generate Gantt chart of best schedule
@@ -265,7 +254,9 @@ class Controller:
         self.summary()
 
     def pre_processing(self, j):
-        self.budget = j.budget  # Store computational budget allowance before it is consumed
+        lg.msg(logging.INFO, 'Starting optimizer {} run {}'.format(j.oid, str(j.run)))
+        self.exec_start_time = time.time()
+
         j.rft = []
         j.rbest = Particle()
         j.population = []
@@ -273,10 +264,28 @@ class Controller:
         if j.initial_sample:
             j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
 
-    def post_processing(self, j, r):
-        if r == j.runs_per_optimizer -1:
+    def post_processing(self, j):
+        j.end_time = time.time()
+        j.total_comp_time_s += time.time() - self.exec_start_time
+
+        if isinstance(j.rbest.candidate[0], float) and j.pid_type == 'combinatorial':
+            j.rbest.candidate = j.pid_cls.candidate_spv_continuous_to_discrete(j.rbest.candidate)
+
+        lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(j.run, "{:.10f}".format(j.rbest.fitness),
+                                                                                  j.rbest.candidate))
+        lg.msg(logging.INFO, 'Completed optimizer {} run {}'.format(j.oid, str(j.run)))
+
+        self.log_optimizer_fitness(j)
+
+        filename = self.results_path + '/' + j.pid + ' ' + j.oid + ' rbest fitness trend run ' + str(j.run)
+        self.vis.fitness_trend(j.rft, filename)  # Plot run-specific trend
+        self.write_to_csv(j.rft, filename + '.csv', header=False)
+
+        if j.run == j.runs_per_optimizer - 1:
             return
-        j.budget = self.budget  # Reinstate full computational budget for next job run
+
+        # Reinstate full computational budget for next job run except last run, as budget used in summary reporting
+        j.budget = j.budget_total
 
     def load_components(self):
         pass

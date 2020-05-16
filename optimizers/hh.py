@@ -1,5 +1,6 @@
 from optimizers.hyper import Hyper
-import copy
+import logging
+from utilities import logger as lg
 
 
 class HH(Hyper):
@@ -14,7 +15,7 @@ class HH(Hyper):
         self.add_samples_to_trend()
         bcf, bc, llh = self.select_heuristic()
         self.set_rbest(bcf, bc)
-        print('Starting with best sample {} with fitness {}'.format(bc, bcf))
+        lg.msg(logging.INFO, 'Hyper heuristic selection seeded with best fitness {} from candidate {}'.format(bcf, bc))
 
         while self.hj.budget > 0:
             bcf, bc, llh = self.select_heuristic()
@@ -31,13 +32,11 @@ class HH(Hyper):
             self.low_level_heuristics[llh].oid_cls.run()
             self.low_level_heuristics[llh].llh_oid_run_count += 1
 
-            #print('Run best is ', self.low_level_heuristics[llh].rbest.fitness, ' with candidate ', self.low_level_heuristics[llh].rbest.candidate, ' by ', self.low_level_heuristics[llh].oid)
-            #print('Global best is ', self.hj.gbest.fitness)
-
             self.hj.budget = int(self.hj.budget - self.hj.llh_budget)
 
             if self.low_level_heuristics[llh].rbest.fitness < self.hj.rbest.fitness:
-                print('Inserting fitness into archive {} by {}'.format( self.low_level_heuristics[llh].rbest.fitness, self.low_level_heuristics[llh].oid))
+                lg.msg(logging.INFO, 'Inserting fitness into archive {} by heuristic {}'.format(
+                    self.low_level_heuristics[llh].rbest.fitness, self.low_level_heuristics[llh].oid))
                 self.low_level_heuristics[llh].llh_oid_aggr_imp += (self.hj.rbest.fitness - self.low_level_heuristics[llh].rbest.fitness)
                 self.llh_fitness[llh].insert(0, self.low_level_heuristics[llh].rbest.fitness)  # Insert at start
                 self.llh_candidates[llh].insert(0, self.low_level_heuristics[llh].rbest.candidate)

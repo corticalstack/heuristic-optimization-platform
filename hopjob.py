@@ -9,9 +9,13 @@ class HopJob:
 
         # Problem, optimizer, benchmark and type
         self.pid = None
+        self.pid_desc = ''
         self.oid = None
+        self.oid_desc = ''
         self.bid = None
-        self.type = None
+        self.pid_type = None
+        self.oid_type = None
+
 
         # Active component flags
         self.pid_enabled = False

@@ -7,7 +7,6 @@ class InspyredWrapper:
 
     @staticmethod
     def generator(random, args):
-        ### JP How to access proper self instead of slf
         if args['slf'].hj.population:
             candidate = copy.deepcopy(args['slf'].hj.population[0].candidate)
             args['slf'].hj.population.pop(0)
@@ -19,7 +18,7 @@ class InspyredWrapper:
     def evaluator(candidates, args):
         fitness = []
         for c in candidates:
-            if isinstance(c[0], float) and args['slf'].hj.type == 'combinatorial':
+            if isinstance(c[0], float) and args['slf'].hj.pid_type == 'combinatorial':
                 c = args['slf'].hj.pid_cls.candidate_spv_continuous_to_discrete(c)
             f, _ = args['slf'].hj.pid_cls.evaluator(c)
             fitness.append(f)

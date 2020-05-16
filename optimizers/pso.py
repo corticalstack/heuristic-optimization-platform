@@ -1,11 +1,7 @@
 from optimizers.optimizer import Optimizer
 from optimizers.particle import Particle
-import logging
-from utilities import logger as lg
 import copy
 from operator import attrgetter
-import math
-import numpy as np
 
 
 class PSO(Optimizer):
@@ -34,7 +30,7 @@ class PSO(Optimizer):
             # Generate candidate of cont values within domain bounds
             new_c.candidate_cont = self.get_generator()(lb=self.hj.oid_lb, ub=self.hj.oid_ub)
 
-            if self.hj.type == 'combinatorial':
+            if self.hj.pid_type == 'combinatorial':
                 # Transform candidate of cont values back to discrete using smallest position value method
                 new_c.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(new_c.candidate_cont)
             else:
@@ -66,7 +62,8 @@ class PSO(Optimizer):
 
     def reset_inherited_population_attr(self):
         for c in self.hj.population:
-            c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb, self.hj.pid_ub)
+            c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb,
+                                                                                    self.hj.pid_ub)
 
     def set_rbest(self, candidate):
         self.hj.rbest = copy.deepcopy(candidate)
@@ -83,7 +80,7 @@ class PSO(Optimizer):
                 velocity = exp_inertia + exp_local + exp_global
                 new_c.candidate_cont.append(velocity)
 
-            if self.hj.type == 'combinatorial':
+            if self.hj.pid_type == 'combinatorial':
                 new_c.candidate = self.hj.pid_cls.candidate_spv_continuous_to_discrete(new_c.candidate_cont)
             else:
                 new_c.candidate_cont = self.clamp(new_c.candidate_cont)

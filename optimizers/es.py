@@ -1,6 +1,4 @@
 from optimizers.optimizer import Optimizer
-import logging
-from utilities import logger as lg
 import inspyred
 from optimizers.inspyred_wrapper import InspyredWrapper
 
