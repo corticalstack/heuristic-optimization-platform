@@ -74,7 +74,8 @@ class HopJob:
         self.end_time = 0
         self.total_comp_time_s = 0
         self.avg_comp_time_s = 0
-        self.ili = []  # Iteration of last improvement
+        self.iter_last_imp = []  # Iteration of last improvement
+        self.imp_count = 0  # Improvement count
 
         # Various co-efficients
         self.sample_size_coeff = 0.01  # Usually used as n dim * (budget * sample size coeff)

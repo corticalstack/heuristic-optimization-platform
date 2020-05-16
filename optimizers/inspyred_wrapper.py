@@ -7,6 +7,7 @@ class InspyredWrapper:
 
     @staticmethod
     def generator(random, args):
+        ### JP How to access proper self instead of slf
         if args['slf'].hj.population:
             candidate = copy.deepcopy(args['slf'].hj.population[0].candidate)
             args['slf'].hj.population.pop(0)
@@ -30,5 +31,15 @@ class InspyredWrapper:
         if args['slf'].hj.oid_cls.__class__.__name__ == 'DEA':
             args['slf'].hj.rft = [o.fitness for o in population]
         else:
-            best = max(population)  # Persist best fitness as population evolves
+            # Persist best fitness as population evolves. Note use of max is correct irrespective of max or min problem,
+            # as Inspyred knows which type of problem the heuristic is instantiated with
+            best = max(population)
             args['slf'].hj.rft.append(round(best.fitness, 2))
+
+        args['slf'].hj.rft.sort()
+        if args['slf'].hj.rft[0] < args['slf'].hj.rbest.fitness:
+            args['slf'].hj.rbest.fitness = args['slf'].hj.rft[0]
+            args['slf'].hj.iter_last_imp[args['slf'].hj.run] = args['slf'].hj.budget_total - args['slf'].hj.budget
+            args['slf'].hj.imp_count += 1
+
+

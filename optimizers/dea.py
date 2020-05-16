@@ -21,7 +21,7 @@ class DEA(Optimizer):
                                evaluator=InspyredWrapper.evaluator,
                                pop_size=self.hj.initial_pop_size,
                                maximize=False,
-                               max_generations=self.hj.budget,
+                               max_evaluations=self.hj.budget,
                                slf=self)
 
         final_pop.sort(reverse=True)

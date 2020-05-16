@@ -43,7 +43,8 @@ class HH(Hyper):
                 self.llh_candidates[llh].insert(0, self.low_level_heuristics[llh].rbest.candidate)
                 self.hj.rft.append(self.low_level_heuristics[llh].rbest.fitness)
                 self.set_rbest(self.low_level_heuristics[llh].rbest.fitness, self.low_level_heuristics[llh].rbest.candidate)
-                self.hj.ili.append(self.hj.budget_total - self.hj.budget)
+                self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
+                self.hj.imp_count += 1
 
     def select_heuristic(self):
         bcf, bc, llh = self.best_candidate_from_pool()
