@@ -16,11 +16,6 @@ class Problem:
         self.n = 0
 
     @staticmethod
-    def write_to_csv(data, filename, header=True):
-        df = pd.DataFrame(data)
-        df.to_csv(filename, header=header, index=False)
-
-    @staticmethod
     def candidate_spv_continuous_to_discrete(c):
         # Get smallest position value
         spv = sorted(range(len(c)), key=lambda i: c[i], reverse=False)

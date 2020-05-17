@@ -72,7 +72,7 @@ class Hyper(Optimizer):
 
     def import_low_level_heuristics(self):
         for hci, hc in enumerate(self.hj.low_level_selection_pool):
-            c = [x for x in self.jobs if x.pid == self.hj.pid and x.oid == hc][0]
-            c.llh_oid_run_count = 0
-            c.llh_oid_aggr_imp = 0
-            self.low_level_heuristics[hci] = c
+            component = [x for x in self.jobs if x.pid == self.hj.pid and x.oid == hc][0]
+            component.llh_oid_run_count = 0
+            component.llh_oid_aggr_imp = 0
+            self.low_level_heuristics[hci] = component

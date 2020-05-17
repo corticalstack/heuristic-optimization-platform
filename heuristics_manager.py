@@ -1,32 +1,23 @@
-from random import Random
+from hopjob import HopJob
+import logging
+from utilities import logger as lg
+from utilities.helper import Helper
+from utilities.stats import Stats
 from utilities.visualisation import Visualisation
 from optimizers.particle import Particle
-import pandas as pd
-from config.config import *
-import os
-import sys
-from itertools import product
-from datetime import datetime
-import copy
-
-from problems.fssp import *
-from problems.rastrigin import *
-from optimizers.es import ES
-from optimizers.dea import DEA
-from optimizers.sa import SA
-from optimizers.ga import GA
-from optimizers.pso import PSO
-from optimizers.hh import HH
 from optimizers.variator import Variator
 from optimizers.crossover import Crossover
-
-from hopjob import HopJob
+from random import Random
+import os
+import sys
+import yaml
+from itertools import product
+import copy
+from importlib import import_module
 import time
 import statistics
 
 script_name = os.path.basename(sys.argv[0]).split('.')
-
-import yaml
 
 
 class HeuristicsManager:
@@ -64,9 +55,11 @@ class HeuristicsManager:
         return _settings
 
     @staticmethod
-    def write_to_csv(data, filename, header=True):
-        df = pd.DataFrame(data)
-        df.to_csv(filename, header=header, index=False)
+    def log_optimizer_fitness(j):
+        if j.rbest.fitness < j.gbest.fitness:
+            j.gbest = copy.deepcopy(j.rbest)
+
+        j.gft.append(j.rbest.fitness)
 
     def set_jobs(self):
         jobs = []
@@ -102,6 +95,7 @@ class HeuristicsManager:
 
         job.oid_type = self.settings['opt'][job.oid]['type']
         job.oid_desc = self.settings['opt'][job.oid]['description']
+        job.oid_optimizer = self.settings['opt'][job.oid]['optimizer']
 
         # ----- Active components
         # Flags indicating problem and optimizer are active. We still build job spec for optimizer, as it may be
@@ -121,8 +115,11 @@ class HeuristicsManager:
         job.comp_budget_base = self.settings['gen']['comp_budget_base']
 
         # Problem class is instantiated here as dimension of problem determines allocated total budget
-        cls = globals()[job.pid]
-        job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
+        my_module = import_module('problems.' + job.pid.lower())
+        job.pid_cls = getattr(my_module, job.pid)(random=self.random, hopjob=job)
+
+        #cls = globals()[job.pid]
+        #job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
         job.budget_total = job.budget
 
@@ -183,8 +180,11 @@ class HeuristicsManager:
             job.reheat = self.settings['opt'][job.oid]['reheat']
 
         # ----- Instantiate optimizer class
-        cls = globals()[self.settings['opt'][job.oid]['optimizer']]
-        job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
+        my_module = import_module('optimizers.' + job.oid_optimizer.lower())
+        job.oid_cls = getattr(my_module, job.oid_optimizer)(random=self.random, hopjob=job)
+
+        #cls = globals()[self.settings['opt'][job.oid]['optimizer']]
+        #job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
         # ----- Instantiate variator and crossover classes
         job.variator_cls = Variator(random=self.random, hopjob=job)
@@ -286,7 +286,7 @@ class HeuristicsManager:
 
         filename = self.results_path + '/' + j.pid + ' ' + j.oid + ' rbest fitness trend run ' + str(j.run)
         self.vis.fitness_trend(j.rft, filename)  # Plot run-specific trend
-        self.write_to_csv(j.rft, filename + '.csv', header=False)
+        Helper.write_to_csv(j.rft, filename + '.csv', header=False)
 
         if j.run == j.runs_per_optimizer - 1:
             return
@@ -296,12 +296,6 @@ class HeuristicsManager:
 
     def load_components(self):
         pass
-
-    def log_optimizer_fitness(self, j):
-        if j.rbest.fitness < j.gbest.fitness:
-            j.gbest = copy.deepcopy(j.rbest)
-
-        j.gft.append(j.rbest.fitness)
 
     def summary(self):
         lg.msg(logging.INFO, 'Basic Statistics')
@@ -373,9 +367,9 @@ class HeuristicsManager:
                                 other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
 
             # Summary per problem
-            self.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
+            Helper.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
 
             # Fitness trend for all optimizers per problem
             filename = self.results_path + '/' + p + ' all optimizers gbest fitness trend'
             self.vis.fitness_trend_all_optimizers(gbest_ft, filename)
-            self.write_to_csv(gbest_ft, filename + '.csv')
+            Helper.write_to_csv(gbest_ft, filename + '.csv')

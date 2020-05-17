@@ -1,5 +1,6 @@
 from problems.problem import Problem
 import logging
+from utilities.helper import Helper
 from utilities import logger as lg
 from utilities.stats import Stats
 
@@ -120,7 +121,7 @@ class FSSP(Problem):
             jt.append([str(p), str(start_time), str(end_time), str(idle_time)])
             total_idle_time += idle_time
         lg.msg(logging.INFO, 'Jobs total idle time is {}'.format(total_idle_time))
-        self.write_to_csv(jt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' jobs times run ' +
+        Helper.write_to_csv(jt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' jobs times run ' +
                           str(self.hj.run) + '.csv', header=True)
 
     def machines_set_loadout_times(self):
@@ -171,5 +172,5 @@ class FSSP(Problem):
             lg.msg(logging.INFO, format_spec.format(str(mi), str(m[0][1]), str(finish_time), str(idle_time)))
             mt.append([str(mi), str(m[0][1]), str(finish_time), str(idle_time)])
         lg.msg(logging.INFO, 'Machines total idle time is {}'.format(total_idle_time))
-        self.write_to_csv(mt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' machines times run ' +
+        Helper.write_to_csv(mt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' machines times run ' +
                           str(self.hj.run) + '.csv', header=True)

@@ -9,13 +9,15 @@ class HopJob:
 
         # Problem, optimizer, benchmark and type
         self.pid = None
-        self.pid_desc = ''
-        self.oid = None
-        self.oid_desc = ''
-        self.bid = None
         self.pid_type = None
-        self.oid_type = None
+        self.pid_desc = ''
 
+        self.oid = None
+        self.oid_type = None
+        self.oid_desc = ''
+        self.oid_optimizer = None
+
+        self.bid = None
 
         # Active component flags
         self.pid_enabled = False
@@ -26,7 +28,6 @@ class HopJob:
         self.oid_cls = None
         self.variator_cls = None
         self.crossover_cls = None
-
 
         # Low Level Heuristics
         self.low_level_selection_pool = []
