@@ -1,4 +1,4 @@
-from controller import Controller
+from heuristics_manager import HeuristicsManager
 import logging
 from utilities import logger as lg
 from utilities.visualisation import Visualisation
@@ -16,7 +16,7 @@ class HeuristicOptimizerPlatform:
         self.set_log_file()
         lg.msg(logging.INFO, 'Heuristic Optimizer Platform (HOP) starting...')
 
-        self.con = Controller(results_path=self.results_path)
+        self.hm = HeuristicsManager(results_path=self.results_path)
         self.vis = Visualisation()
         self.optimize()
         lg.msg(logging.INFO, 'Heuristic Optimizer Platform (HOP) completed')
@@ -39,7 +39,7 @@ class HeuristicOptimizerPlatform:
         logging.getLogger('matplotlib.font_manager').disabled = True
 
     def optimize(self):
-        self.con.execute_jobs()
+        self.hm.execute_jobs()
 
 
 if __name__ == "__main__":

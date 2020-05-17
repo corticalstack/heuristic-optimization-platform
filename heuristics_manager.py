@@ -17,6 +17,9 @@ from optimizers.sa import SA
 from optimizers.ga import GA
 from optimizers.pso import PSO
 from optimizers.hh import HH
+from optimizers.variator import Variator
+from optimizers.crossover import Crossover
+
 from hopjob import HopJob
 import time
 import statistics
@@ -26,12 +29,12 @@ script_name = os.path.basename(sys.argv[0]).split('.')
 import yaml
 
 
-class Controller:
+class HeuristicsManager:
     """
     Controller
     """
     def __init__(self, results_path):
-        lg.msg(logging.INFO, 'Initialising controller')
+        lg.msg(logging.INFO, 'Initialising Heuristics Manager')
         self.results_path = results_path
         self.random = Random()
         #self.random.seed(42)
@@ -183,6 +186,10 @@ class Controller:
         cls = globals()[self.settings['opt'][job.oid]['optimizer']]
         job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
 
+        # ----- Instantiate variator and crossover classes
+        job.variator_cls = Variator(random=self.random, hopjob=job)
+        job.crossover_cls = Crossover(random=self.random, hopjob=job)
+
         # ----- Generator (solution), Variator (neighbour from solution) and Crossover (parent) instantiation
         if 'generator_comb' in self.settings['opt'][job.oid]:
             job.generator_comb = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator_comb'])
@@ -191,10 +198,10 @@ class Controller:
             job.generator_cont = getattr(job.pid_cls, 'generator_' + self.settings['opt'][job.oid]['generator_cont'])
 
         if 'variator' in self.settings['opt'][job.oid]:
-            job.variator = getattr(job.oid_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
+            job.variator = getattr(job.variator_cls, 'variator_' + self.settings['opt'][job.oid]['variator'])
 
         if 'crossover' in self.settings['opt'][job.oid]:
-            job.crossover = getattr(job.oid_cls, 'crossover_' + self.settings['opt'][job.oid]['crossover'])
+            job.crossover = getattr(job.crossover_cls, 'crossover_' + self.settings['opt'][job.oid]['crossover'])
 
         # ----- Various co-efficients
         if 'inertia_coeff' in self.settings['prb'][job.pid]:

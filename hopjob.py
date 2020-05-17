@@ -24,6 +24,9 @@ class HopJob:
         # Active component classes
         self.pid_cls = None
         self.oid_cls = None
+        self.variator_cls = None
+        self.crossover_cls = None
+
 
         # Low Level Heuristics
         self.low_level_selection_pool = []

@@ -60,11 +60,6 @@ class PSO(Optimizer):
                     self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
                     self.hj.imp_count += 1
 
-    def reset_inherited_population_attr(self):
-        for c in self.hj.population:
-            c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb,
-                                                                                    self.hj.pid_ub)
-
     def set_rbest(self, candidate):
         self.hj.rbest = copy.deepcopy(candidate)
 
@@ -94,3 +89,8 @@ class PSO(Optimizer):
         for c in candidate:
             new_candidate.append(max(min(self.hj.pid_ub, c), self.hj.pid_lb))
         return new_candidate
+
+    def reset_inherited_population_attr(self):
+        for c in self.hj.population:
+            c.candidate_cont = self.hj.pid_cls.candidate_spv_discrete_to_continuous(c.candidate, self.hj.pid_lb,
+                                                                                    self.hj.pid_ub)
