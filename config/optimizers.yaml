@@ -1,7 +1,7 @@
 # Optimizers configuration
 
-  SA:
-    enabled: True
+  SA-N-EA:
+    enabled: False
     description: Simulated Annealing
     type: low
     optimizer: SA
@@ -12,8 +12,44 @@
     lb: null
     ub: null
     reheat: False
+  SA-N-E:
+    enabled: False
+    description: Simulated Annealing
+    type: low
+    optimizer: SA
+    generator_comb: discrete
+    generator_cont: continuous
+    variator: n_exchange
+    initial_sample: True
+    lb: null
+    ub: null
+    reheat: False
+  SA-N-RI:
+    enabled: False
+    description: Simulated Annealing
+    type: low
+    optimizer: SA
+    generator_comb: discrete
+    generator_cont: continuous
+    variator: n_remove_insert
+    initial_sample: True
+    lb: null
+    ub: null
+    reheat: False
+  SA-N-TF:
+    enabled: False
+    description: Simulated Annealing
+    type: low
+    optimizer: SA
+    generator_comb: discrete
+    generator_cont: continuous
+    variator: n_to_first
+    initial_sample: True
+    lb: null
+    ub: null
+    reheat: False
   DE:
-    enabled: True
+    enabled: False
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA
@@ -32,15 +68,60 @@
     initial_sample: False
     lb: 0
     ub: 4
-  GA:
-    enabled: False
+  GA-N-EA:
+    enabled: True
+    description: Genetic algorithm with parent selection, mutation, elitism
+    type: low
+    optimizer: GA
+    generator_comb: discrete
+    generator_cont: chromosome
+    variator: n_exchange_adjacent
+    crossover: two_point
+    initial_sample: False
+    lb: null
+    ub: null
+    number_parents: 2
+    number_children: 10
+    parent_gene_similarity_threshold: 0.8
+  GA-N-E:
+    enabled: True
     description: Genetic algorithm with parent selection, mutation, elitism
     type: low
     optimizer: GA
     generator_comb: discrete
     generator_cont: chromosome
     variator: n_exchange
-    crossover: sbox
+    crossover: two_point
+    initial_sample: False
+    lb: null
+    ub: null
+    number_parents: 2
+    number_children: 10
+    parent_gene_similarity_threshold: 0.8
+  GA-N-RI:
+    enabled: True
+    description: Genetic algorithm with parent selection, mutation, elitism
+    type: low
+    optimizer: GA
+    generator_comb: discrete
+    generator_cont: chromosome
+    variator: n_remove_insert
+    crossover: two_point
+    initial_sample: False
+    lb: null
+    ub: null
+    number_parents: 2
+    number_children: 10
+    parent_gene_similarity_threshold: 0.8
+  GA-N-TF:
+    enabled: True
+    description: Genetic algorithm with parent selection, mutation, elitism
+    type: low
+    optimizer: GA
+    generator_comb: discrete
+    generator_cont: chromosome
+    variator: n_to_first
+    crossover: two_point
     initial_sample: False
     lb: null
     ub: null
@@ -49,7 +130,7 @@
     parent_gene_similarity_threshold: 0.8
   PSO:
     enabled: False
-    description: Particle swarm
+    description: Particle Swarm
     type: low
     optimizer: PSO
     generator_comb: continuous
@@ -57,16 +138,31 @@
     initial_sample: False
     lb: 0
     ub: 4
-  GA-HH:
+  HH-SA-ALL:
     enabled: False
-    description: Hyper heuristics
+    description: Hyper heuristics - All SA Variants
+    type: hyper
+    optimizer: HH
+    low_level_selection_pool:
+        - SA-N-EA
+        - SA-N-E
+        - SA-N-RI
+        - SA-N-TF
+    decay: 0.8
+    decay_coeff: 0.99
+    llh_sample_runs: 3
+    llh_sample_budget_coeff:  0.01
+    llh_budget_coeff: 0.05
+  HH-DE-ES:
+    enabled: False
+    description: Hyper heuristics - DE & ES
     type: hyper
     optimizer: HH
     low_level_selection_pool:
         - DE
         - ES
     decay: 0.5
-    decay_coeff: 0.97
+    decay_coeff: 0.99
     llh_sample_runs: 3
     llh_sample_budget_coeff:  0.01
     llh_budget_coeff: 0.05

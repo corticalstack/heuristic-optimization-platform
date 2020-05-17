@@ -33,6 +33,7 @@ class HeuristicsManager:
         self.settings = self.get_config()
         self.problems_optimizers = []
         self.problems = []
+        self.benchmarks = []
         self.optimizers = []
         self.jobs = self.set_jobs()
         self.exec_start_time = 0
@@ -64,6 +65,7 @@ class HeuristicsManager:
     def set_jobs(self):
         jobs = []
         self.problems = self.get_problems()
+        self.benchmarks = self.get_benchmarks()
         self.optimizers = self.get_optimizers()
         self.problems_optimizers = list(product(self.problems, self.optimizers))
         self.problems_optimizers.sort()
@@ -71,7 +73,7 @@ class HeuristicsManager:
         for (pid, oid) in self.problems_optimizers:
             benchmarks = []
             if 'benchmarks' not in self.settings['prb'][pid]:
-                benchmarks.append('n/a')
+                benchmarks.append('na')
             else:
                 for bid in self.settings['prb'][pid]['benchmarks']:
                     if not self.settings['prb'][pid]['benchmarks'][bid]['enabled']:
@@ -79,6 +81,9 @@ class HeuristicsManager:
                     benchmarks.append(bid)
             for bid in benchmarks:
                 jobs.append(self.create_job_spec(pid, oid, bid))
+
+        # Sort jobs by problem, benchmark and optimizer
+        jobs = sorted(jobs, key=lambda j: (j.pid, j.bid, j.oid), reverse=False)
         return jobs
 
     def create_job_spec(self, *args):
@@ -115,11 +120,9 @@ class HeuristicsManager:
         job.comp_budget_base = self.settings['gen']['comp_budget_base']
 
         # Problem class is instantiated here as dimension of problem determines allocated total budget
-        my_module = import_module('problems.' + job.pid.lower())
-        job.pid_cls = getattr(my_module, job.pid)(random=self.random, hopjob=job)
+        prob_module = import_module('problems.' + job.pid.lower())
+        job.pid_cls = getattr(prob_module, job.pid)(random=self.random, hopjob=job)
 
-        #cls = globals()[job.pid]
-        #job.pid_cls = cls(random=self.random, hopjob=job)  # Instantiate problem
         job.budget = job.pid_cls.n * job.comp_budget_base
         job.budget_total = job.budget
 
@@ -180,11 +183,8 @@ class HeuristicsManager:
             job.reheat = self.settings['opt'][job.oid]['reheat']
 
         # ----- Instantiate optimizer class
-        my_module = import_module('optimizers.' + job.oid_optimizer.lower())
-        job.oid_cls = getattr(my_module, job.oid_optimizer)(random=self.random, hopjob=job)
-
-        #cls = globals()[self.settings['opt'][job.oid]['optimizer']]
-        #job.oid_cls = cls(random=self.random, hopjob=job)  # Instantiate optimizer
+        opt_module = import_module('optimizers.' + job.oid_optimizer.lower())
+        job.oid_cls = getattr(opt_module, job.oid_optimizer)(random=self.random, hopjob=job)
 
         # ----- Instantiate variator and crossover classes
         job.variator_cls = Variator(random=self.random, hopjob=job)
@@ -227,6 +227,19 @@ class HeuristicsManager:
             problems.append(pid)
         return problems
 
+    def get_benchmarks(self):
+        benchmarks = []
+        for pid in self.problems:
+            if 'benchmarks' not in self.settings['prb'][pid]:
+                benchmarks.append('na')
+            else:
+                for bid in self.settings['prb'][pid]['benchmarks']:
+                    if not self.settings['prb'][pid]['benchmarks'][bid]['enabled']:
+                        continue
+                    benchmarks.append(bid)
+
+        return benchmarks
+
     def get_optimizers(self):
         optimizers = []
         for oid in self.settings['opt']:
@@ -243,7 +256,9 @@ class HeuristicsManager:
 
             j.start_time = time.time()
 
-            lg.msg(logging.INFO, 'Optimizing {} with optimizer {}'.format(j.pid_desc, j.oid))
+            if j.bid != 'n/a':
+                lg.msg(logging.INFO, 'Benchmark {}'.format(j.bid))
+            lg.msg(logging.INFO, 'Optimizing {} with {} ({})'.format(j.pid_desc, j.oid, j.oid_desc))
             lg.msg(logging.INFO, 'Executing {} sample runs'.format(j.runs_per_optimizer))
 
             for r in range(j.runs_per_optimizer):
@@ -257,6 +272,8 @@ class HeuristicsManager:
 
             # Execute problem-specific tasks upon optimization completion e.g. generate Gantt chart of best schedule
             j.pid_cls.post_processing()
+
+            lg.msg(logging.INFO, 'Completed optimizing {} with {} ({})'.format(j.pid_desc, j.oid, j.oid_desc))
 
         self.summary()
 
@@ -278,13 +295,13 @@ class HeuristicsManager:
         if isinstance(j.rbest.candidate[0], float) and j.pid_type == 'combinatorial':
             j.rbest.candidate = j.pid_cls.candidate_spv_continuous_to_discrete(j.rbest.candidate)
 
-        lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(j.run, "{:.10f}".format(j.rbest.fitness),
-                                                                                  j.rbest.candidate))
-        lg.msg(logging.INFO, 'Completed optimizer {} run {}'.format(j.oid, str(j.run)))
+        lg.msg(logging.INFO, 'Run {} best fitness is {} with candidate {}'.format(j.run, "{:.10f}".format(
+            j.rbest.fitness), j.rbest.candidate))
+        lg.msg(logging.INFO, 'Completed benchmark {} optimizer {} run {}'.format(j.bid, j.oid, str(j.run)))
 
         self.log_optimizer_fitness(j)
 
-        filename = self.results_path + '/' + j.pid + ' ' + j.oid + ' rbest fitness trend run ' + str(j.run)
+        filename = self.results_path + '/' + j.pid + ' ' + j.bid + ' ' + j.oid + ' rbest fitness trend run ' + str(j.run)
         self.vis.fitness_trend(j.rft, filename)  # Plot run-specific trend
         Helper.write_to_csv(j.rft, filename + '.csv', header=False)
 
@@ -298,78 +315,87 @@ class HeuristicsManager:
         pass
 
     def summary(self):
-        lg.msg(logging.INFO, 'Basic Statistics')
+        lg.msg(logging.INFO, 'Statistics')
         summary = []
         for p in self.problems:
             if not self.settings['prb'][p]['enabled']:
                 continue
-            lg.msg(logging.INFO, 'Summary for {}'.format(p))
-            gbest_ft = {}
-            bdp = {}  # Bounds diff pct
-            other = {}
-            for o in self.optimizers:
-                if not self.settings['opt'][o]['enabled']:
-                    continue
-                for j in self.jobs:
-                    if not (j.pid == p and j.oid == o):
+            for b in self.benchmarks:
+                _new_benchmark = True
+                gbest_ft = {}
+                bdp = {}  # Bounds diff pct
+                other = {}
+                for o in self.optimizers:
+                    if not self.settings['opt'][o]['enabled']:
                         continue
-                    gbest_ft[j.oid] = {}
-                    gbest_ft[j.oid] = j.gft
-                    bdp[j.oid] = {}
-                    other[j.oid] = {}
-                    other[j.oid]['avg_comp_time_s'] = j.avg_comp_time_s
-                    other[j.oid]['budget'] = j.budget_total
-                    other[j.oid]['budget_rem'] = j.budget
-                    if j.iter_last_imp:
-                        other[j.oid]['avg_iter_last_imp'] = int(statistics.mean(j.iter_last_imp))
-                    else:
-                        other[j.oid]['avg_iter_last_imp'] = 'n/a'
+                    for j in self.jobs:
+                        if not (j.pid == p and j.bid == b and j.oid == o):
+                            continue
+                        if _new_benchmark:
+                            lg.msg(logging.INFO, 'Summary for problem {} benchmark {}'.format(p, b))
+                            _new_benchmark = False
+                        gbest_ft[j.oid] = {}
+                        gbest_ft[j.oid] = j.gft
+                        bdp[j.oid] = {}
+                        other[j.oid] = {}
+                        other[j.oid]['avg_comp_time_s'] = j.avg_comp_time_s
+                        other[j.oid]['budget'] = j.budget_total
+                        other[j.oid]['budget_rem'] = j.budget
+                        if j.iter_last_imp:
+                            other[j.oid]['avg_iter_last_imp'] = int(statistics.mean(j.iter_last_imp))
+                        else:
+                            other[j.oid]['avg_iter_last_imp'] = 'n/a'
 
-                    if other[j.oid]['avg_iter_last_imp'] != 'n/a':
-                        other[j.oid]['budget_no_imp_pct'] = round(((j.budget_total - other[j.oid]['avg_iter_last_imp']) / j.budget_total) * 100, 2)
-                    else:
-                        other[j.oid]['budget_no_imp_pct'] = 'n/a'
-                    other[j.oid]['imp_count'] = j.imp_count
-                    if j.bid != 'n/a':
-                        bdp[j.oid] = [j.pid_cls.ilb, j.pid_lb_diff_pct, j.pid_cls.iub, j.pid_ub_diff_pct]
-                    else:
-                        bdp[j.oid] = [['n/a'] * 4]
-            stats_summary = Stats.get_summary(gbest_ft)
+                        if other[j.oid]['avg_iter_last_imp'] != 'n/a':
+                            other[j.oid]['budget_no_imp_pct'] = round(((j.budget_total - other[j.oid]['avg_iter_last_imp']) / j.budget_total) * 100, 2)
+                        else:
+                            other[j.oid]['budget_no_imp_pct'] = 'n/a'
+                        other[j.oid]['imp_count'] = j.imp_count
+                        if j.bid != 'na':
+                            bdp[j.oid] = [j.pid_cls.ilb, j.pid_lb_diff_pct, j.pid_cls.iub, j.pid_ub_diff_pct]
+                        else:
+                            bdp[j.oid] = ['na'] * 4
 
-            format_spec = "{:>20}" * 16
+                # Only proceed for compiled stats for valid problem/benchmark/optimizer
+                if not gbest_ft:
+                    continue
 
-            cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB', 'LB Diff %',
-                    'UB', 'UB Diff %', 'Avg Cts', 'Budget', 'Budget Rem', 'Avg Iter Last Imp', 'Budget No Imp %',
-                    'Imp Count']
-            summary.append(cols)
-            lg.msg(logging.INFO, format_spec.format(*cols))
+                stats_summary = Stats.get_summary(gbest_ft)
 
-            for k, v in stats_summary.items():
-                lg.msg(logging.INFO, format_spec.format(str(k),
-                                                        str(v['minf']),
-                                                        str(v['maxf']),
-                                                        str(v['mean']),
-                                                        str(v['stdev']),
-                                                        str(v['wts']),
-                                                        str(bdp[k][0]),
-                                                        str(bdp[k][1]),
-                                                        str(bdp[k][2]),
-                                                        str(bdp[k][3]),
-                                                        str(round(other[k]['avg_comp_time_s'], 3)),
-                                                        other[k]['budget'],
-                                                        other[k]['budget_rem'],
-                                                        other[k]['avg_iter_last_imp'],
-                                                        other[k]['budget_no_imp_pct'],
-                                                        other[k]['imp_count']))
-                summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
-                               str(bdp[k][0]), str(bdp[k][1]), str(bdp[k][2]), str(bdp[k][3]),
-                                str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'], other[k]['budget_rem'],
-                                other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
+                format_spec = "{:>20}" * 16
 
-            # Summary per problem
-            Helper.write_to_csv(summary, self.results_path + '/' + p + ' problem summary.csv')
+                cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB', 'LB Diff %',
+                        'UB', 'UB Diff %', 'Avg Cts', 'Budget', 'Budget Rem', 'Avg Iter Last Imp', 'Budget No Imp %',
+                        'Imp Count']
+                summary.append(cols)
+                lg.msg(logging.INFO, format_spec.format(*cols))
 
-            # Fitness trend for all optimizers per problem
-            filename = self.results_path + '/' + p + ' all optimizers gbest fitness trend'
-            self.vis.fitness_trend_all_optimizers(gbest_ft, filename)
-            Helper.write_to_csv(gbest_ft, filename + '.csv')
+                for k, v in stats_summary.items():
+                    lg.msg(logging.INFO, format_spec.format(str(k),
+                                                            str(round(v['minf'], 3)),
+                                                            str(round(v['maxf'], 3)),
+                                                            str(v['mean']),
+                                                            str(v['stdev']),
+                                                            str(v['wts']),
+                                                            str(bdp[k][0]),
+                                                            str(bdp[k][1]),
+                                                            str(bdp[k][2]),
+                                                            str(bdp[k][3]),
+                                                            str(round(other[k]['avg_comp_time_s'], 3)),
+                                                            other[k]['budget'],
+                                                            other[k]['budget_rem'],
+                                                            other[k]['avg_iter_last_imp'],
+                                                            other[k]['budget_no_imp_pct'],
+                                                            other[k]['imp_count']))
+                    summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
+                                   str(bdp[k][0]), str(bdp[k][1]), str(bdp[k][2]), str(bdp[k][3]),
+                                    str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'], other[k]['budget_rem'],
+                                    other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
+
+                # Summary per problem
+                Helper.write_to_csv(summary, self.results_path + '/' + p + ' ' + b + ' problem summary.csv')
+
+                # Fitness trend for all optimizers per problem
+                filename = self.results_path + '/' + p + ' ' + b + ' all optimizers gbest fitness trend'
+                self.vis.fitness_trend_all_optimizers(gbest_ft, filename)
+                Helper.write_to_csv(gbest_ft, filename + '.csv')

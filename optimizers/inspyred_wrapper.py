@@ -28,7 +28,8 @@ class InspyredWrapper:
     @staticmethod
     def observer(population, num_generations, num_evaluations, args):
         if args['slf'].hj.oid_cls.__class__.__name__ == 'DEA':
-            args['slf'].hj.rft = [o.fitness for o in population]
+            ft = [o.fitness for o in population]
+            args['slf'].hj.rft.extend(ft)
         else:
             # Persist best fitness as population evolves. Note use of max is correct irrespective of max or min problem,
             # as Inspyred knows which type of problem the heuristic is instantiated with

@@ -19,7 +19,7 @@
     local_coeff: 2.1
     global_coeff: 2.1
   RASTRIGIN:
-    enabled: False
+    enabled: True
     type: continuous
     description: Rastrigin
     lb: -5.12

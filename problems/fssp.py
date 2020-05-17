@@ -60,8 +60,8 @@ class FSSP(Problem):
         self.hj.pid_lb_diff_pct, self.hj.pid_ub_diff_pct = Stats.bounds_compare(self.ilb, self.iub, self.hj.gbest.fitness)
 
         fitness, _ = self.evaluator(self.hj.gbest.candidate)  # set machine assigned jobs to best permutation
-        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs, self.hj.results_path + '/' +
-                                               self.hj.pid + ' ' + self.hj.oid + ' gbest Gantt chart')
+        filename = self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.bid + ' ' + self.hj.oid + ' gbest Gantt chart'
+        self.vis.solution_representation_gantt(fitness, self.machines, self.jobs, filename)
 
         lg.msg(logging.INFO, 'Machine times for best fitness {}'.format(fitness))
         self.machines_times(self.hj.gbest.candidate)
@@ -121,8 +121,9 @@ class FSSP(Problem):
             jt.append([str(p), str(start_time), str(end_time), str(idle_time)])
             total_idle_time += idle_time
         lg.msg(logging.INFO, 'Jobs total idle time is {}'.format(total_idle_time))
-        Helper.write_to_csv(jt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' jobs times run ' +
-                          str(self.hj.run) + '.csv', header=True)
+        filename = self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.bid + ' ' + self.hj.oid + \
+                   ' jobs times run ' + str(self.hj.run) + '.csv'
+        Helper.write_to_csv(jt, filename, header=True)
 
     def machines_set_loadout_times(self):
         for m in range(self.machines['quantity']):
@@ -172,5 +173,6 @@ class FSSP(Problem):
             lg.msg(logging.INFO, format_spec.format(str(mi), str(m[0][1]), str(finish_time), str(idle_time)))
             mt.append([str(mi), str(m[0][1]), str(finish_time), str(idle_time)])
         lg.msg(logging.INFO, 'Machines total idle time is {}'.format(total_idle_time))
-        Helper.write_to_csv(mt, self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.oid + ' machines times run ' +
-                          str(self.hj.run) + '.csv', header=True)
+        filename = self.hj.results_path + '/' + self.hj.pid + ' ' + self.hj.bid + ' ' + self.hj.oid + \
+                   ' machines times run ' + str(self.hj.run) + '.csv'
+        Helper.write_to_csv(mt, filename, header=True)
