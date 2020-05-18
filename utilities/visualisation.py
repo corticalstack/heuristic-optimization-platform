@@ -5,6 +5,8 @@ import matplotlib.font_manager as font_manager
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from matplotlib.cm import hsv
+import matplotlib.cm
+import matplotlib.colors
 import math
 
 
@@ -26,15 +28,26 @@ class Visualisation:
         plt.close()
         #plt.show()
 
-    @staticmethod
-    def fitness_trend_all_optimizers(trends, filename):
+    def fitness_trend_all_optimizers(self, trends, filename):
         df_ft = pd.DataFrame()
         for k, v, in trends.items():
             max_generations = len(v)
             df_ft[k] = v
 
         if not df_ft.empty:
-            g = sns.relplot(kind="line", data=df_ft, dashes=False)
+            distinct_colours = df_ft.shape[1]
+            shades = 1
+            total_colours = shades * distinct_colours
+
+            # Generate colour map
+            cmap = self.generate_colormap(total_colours)
+
+            # Register colour map and transform to seaborn palette
+            matplotlib.cm.register_cmap('alloptcmap', cmap)
+            cpal = sns.color_palette('alloptcmap', n_colors=total_colours, desat=1.0)
+
+            # Plot multi line chart for all optimizer trends
+            g = sns.relplot(kind="line", data=df_ft, dashes=False, palette=cpal)
 
             # Get access to matplotlib control via g.axes
             axes = g.axes.flatten()
