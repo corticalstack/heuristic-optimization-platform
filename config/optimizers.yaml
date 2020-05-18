@@ -1,8 +1,8 @@
 # Optimizers configuration
 
   SA-N-EA:
-    enabled: False
-    description: Simulated Annealing
+    enabled: True
+    description: Simulated Annealing with exchange adjacent variator
     type: low
     optimizer: SA
     generator_comb: discrete
@@ -14,7 +14,7 @@
     reheat: False
   SA-N-E:
     enabled: True
-    description: Simulated Annealing
+    description: Simulated Annealing with exchange variator
     type: low
     optimizer: SA
     generator_comb: discrete
@@ -26,7 +26,7 @@
     reheat: False
   SA-N-RI:
     enabled: True
-    description: Simulated Annealing
+    description: Simulated Annealing with remove-insert variator
     type: low
     optimizer: SA
     generator_comb: discrete
@@ -37,8 +37,8 @@
     ub: null
     reheat: False
   SA-N-TF:
-    enabled: False
-    description: Simulated Annealing
+    enabled: True
+    description: Simulated Annealing with n to first variator
     type: low
     optimizer: SA
     generator_comb: discrete
@@ -49,7 +49,7 @@
     ub: null
     reheat: False
   DE:
-    enabled: False
+    enabled: True
     description: Differential Evolution (Inspyred)
     type: low
     optimizer: DEA
@@ -59,7 +59,7 @@
     lb: 0
     ub: 4
   ES:
-    enabled: False
+    enabled: True
     description: Evoluation Strategy (Inspyred)
     type: low
     optimizer: ES
@@ -69,8 +69,8 @@
     lb: 0
     ub: 4
   GA-N-EA-1P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with exchange adjacent variator and one-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -84,8 +84,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-EA-2P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm exchange adjacent variator and two-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -99,8 +99,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-EA-SBOX:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with exchange adjacent variator and sbox crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -114,8 +114,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-E-1P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with exchange variator and one-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -129,8 +129,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-E-2P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with exchange variator and two-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -144,8 +144,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-E-SBOX:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with exchange variator and sbox crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -159,8 +159,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-1P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with remove-insert variator and one-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -174,8 +174,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-2P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with remove-insert variator and two-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -189,8 +189,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-SBOX:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with remove-insert variator and sbox crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -204,8 +204,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-1P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with n to first variator and one-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -219,8 +219,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-2P:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with n to first variator and two-point crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -234,8 +234,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-SBOX:
-    enabled: False
-    description: Genetic algorithm with parent selection, mutation, elitism
+    enabled: True
+    description: Genetic algorithm with n to first variator and sbox crossover
     type: low
     optimizer: GA
     generator_comb: discrete
@@ -249,8 +249,8 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   PSO:
-    enabled: False
-    description: Particle Swarm
+    enabled: True
+    description: Particle Swarm Optimization
     type: low
     optimizer: PSO
     generator_comb: continuous
@@ -259,7 +259,7 @@
     lb: 0
     ub: 4
   HH-SA-ALL:
-    enabled: False
+    enabled: True
     description: Hyper heuristics - All SA Variants
     type: hyper
     optimizer: HH
@@ -274,7 +274,7 @@
     llh_sample_budget_coeff:  0.01
     llh_budget_coeff: 0.05
   HH-DE-ES:
-    enabled: False
+    enabled: True
     description: Hyper heuristics - DE & ES
     type: hyper
     optimizer: HH
@@ -287,7 +287,7 @@
     llh_sample_budget_coeff:  0.01
     llh_budget_coeff: 0.05
   HH-GA-ALL:
-    enabled: False
+    enabled: True
     description: Hyper heuristics - All GA Variants
     type: hyper
     optimizer: HH

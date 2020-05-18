@@ -59,9 +59,10 @@ class Problem:
         sample = []
         num = int(self.n * (self.hj.budget * self.hj.sample_size_coeff))
 
-        # Default sample size to 10 in case above results in 0, typically during testing framework with small budget
+        # Default sample size in case above results in 0, typically during testing framework with small budget
         if num == 0:
-            num = 10
+            num = 100
+
         for _ in range(num):
             if self.hj.pid_type == 'combinatorial':
                 sample.append(self.hj.generator_comb(lb=self.hj.pid_lb, ub=self.hj.pid_ub))
