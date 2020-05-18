@@ -17,6 +17,9 @@ class GA(Optimizer):
         self.evolve()
 
     def evolve(self):
+        # Incoming population migrates to starting population, reset to fit GA
+        if self.hj.population:
+            self.reset_inherited_population_attr()
 
         # Complete assembly of initial population size, accounting for any incoming migrant population
         for i in range(self.hj.initial_pop_size - len(self.hj.population)):
@@ -122,3 +125,15 @@ class GA(Optimizer):
             new_pop.append(particle)
 
         return new_pop
+
+    def reset_inherited_population_attr(self):
+
+        import struct
+        for c in self.hj.population:
+            if isinstance(c.candidate[0], float):
+                cand = []
+                for gene in c.candidate:
+                    gene = format(struct.unpack('!I', struct.pack('!f', gene))[0], '032b')
+                    t = [int(x) for x in gene]
+                    cand.append(t)
+                c.candidate = cand

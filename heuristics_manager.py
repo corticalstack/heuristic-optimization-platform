@@ -102,6 +102,23 @@ class HeuristicsManager:
         job.oid_desc = self.settings['opt'][job.oid]['description']
         job.oid_optimizer = self.settings['opt'][job.oid]['optimizer']
 
+        # ----- Various co-efficients
+        # Declared early here in case referenced by optimizers
+        if 'inertia_coeff' in self.settings['prb'][job.pid]:
+            job.inertia_coeff = self.settings['prb'][job.pid]['inertia_coeff']
+
+        if 'local_coeff' in self.settings['prb'][job.pid]:
+            job.local_coeff = self.settings['prb'][job.pid]['local_coeff']
+
+        if 'global_coeff' in self.settings['prb'][job.pid]:
+            job.global_coeff = self.settings['prb'][job.pid]['global_coeff']
+
+        if 'decay' in self.settings['opt'][job.oid]:
+            job.decay = self.settings['opt'][job.oid]['decay']
+
+        if 'decay_coeff' in self.settings['opt'][job.oid]:
+            job.decay_coeff = self.settings['opt'][job.oid]['decay_coeff']
+
         # ----- Active components
         # Flags indicating problem and optimizer are active. We still build job spec for optimizer, as it may be
         # disabled "standalone", but actively used as low-level heuristic (llh) in hyper-heuristic
@@ -203,22 +220,6 @@ class HeuristicsManager:
         if 'crossover' in self.settings['opt'][job.oid]:
             job.crossover = getattr(job.crossover_cls, 'crossover_' + self.settings['opt'][job.oid]['crossover'])
 
-        # ----- Various co-efficients
-        if 'inertia_coeff' in self.settings['prb'][job.pid]:
-            job.inertia_coeff = self.settings['prb'][job.pid]['inertia_coeff']
-
-        if 'local_coeff' in self.settings['prb'][job.pid]:
-            job.local_coeff = self.settings['prb'][job.pid]['local_coeff']
-
-        if 'global_coeff' in self.settings['prb'][job.pid]:
-            job.global_coeff = self.settings['prb'][job.pid]['global_coeff']
-
-        if 'decay' in self.settings['opt'][job.oid]:
-            job.decay = self.settings['opt'][job.oid]['decay']
-
-        if 'decay_coeff' in self.settings['opt'][job.oid]:
-            job.decay_coeff = self.settings['opt'][job.oid]['decay_coeff']
-
         return job
 
     def get_problems(self):
@@ -284,9 +285,6 @@ class HeuristicsManager:
         j.rft = []
         j.rbest = Particle()
         j.population = []
-
-        if j.initial_sample:
-            j.pid_cls.initial_sample = j.pid_cls.generate_initial_sample()
 
     def post_processing(self, j):
         j.end_time = time.time()
@@ -362,7 +360,7 @@ class HeuristicsManager:
 
                 stats_summary = Stats.get_summary(gbest_ft)
 
-                format_spec = "{:>20}" * 16
+                format_spec = "{:>30}" * 16
 
                 cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB', 'LB Diff %',
                         'UB', 'UB Diff %', 'Avg Cts', 'Budget', 'Budget Rem', 'Avg Iter Last Imp', 'Budget No Imp %',

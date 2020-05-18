@@ -35,9 +35,12 @@ class Problem:
     def candidate_spv_discrete_to_continuous(self, *args):
         candidate, pos_min, pos_max = args
         cont = []
-        linspace = np.linspace(pos_min, pos_max, self.n, endpoint=False)
-        for c in candidate:
-            cont.append(round(linspace[c], 2))
+        linspace = np.linspace(pos_min, pos_max, self.n, endpoint=True)
+        for ci, c in enumerate(candidate):
+            if self.hj.pid_type == 'combinatorial':
+                cont.append(round(linspace[c], 2))
+            else:
+                cont.append(round(linspace[ci], 2))
         return cont
 
     def generator_chromosome(self, **kwargs):
@@ -55,6 +58,10 @@ class Problem:
     def generate_initial_sample(self):
         sample = []
         num = int(self.n * (self.hj.budget * self.hj.sample_size_coeff))
+
+        # Default sample size to 10 in case above results in 0, typically during testing framework with small budget
+        if num == 0:
+            num = 10
         for _ in range(num):
             if self.hj.pid_type == 'combinatorial':
                 sample.append(self.hj.generator_comb(lb=self.hj.pid_lb, ub=self.hj.pid_ub))

@@ -8,6 +8,7 @@ class HH(Hyper):
         Hyper.__init__(self, **kwargs)
 
     def optimize(self):
+        self.hj.decay = self.decay  # Restore decay start-point to original configuration
         self.hyper()
 
     def hyper(self):
@@ -48,8 +49,8 @@ class HH(Hyper):
     def select_heuristic(self):
         bcf, bc, llh = self.best_candidate_from_pool()
 
-        if self.llh_total > 1 and self.random.random() < self.hj.decay:
-            choice = [i for i in range(0, self.llh_total) if i != llh]
+        if self.llh_total > 1 and self.hj.decay > self.random.random():
+            choice = [i for i in range(0, self.llh_total) if i != llh]  # Exclude best
             llh = self.random.choice(choice)
 
         self.hj.decay *= self.hj.decay_coeff

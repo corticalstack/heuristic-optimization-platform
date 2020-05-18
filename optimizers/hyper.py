@@ -14,6 +14,7 @@ class Hyper(Optimizer):
         self.llh_candidates = []
         self.llh_exec = []
         self.jobs = []
+        self.decay = self.hj.decay
 
     def pre_processing(self, **kwargs):
         Optimizer.pre_processing(self, **kwargs)

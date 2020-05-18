@@ -1,10 +1,3 @@
-import logging
-from utilities import logger as lg
-from optimizers.variator import Variator
-from optimizers.crossover import Crossover
-import copy
-
-
 class Optimizer:
     def __init__(self, **kwargs):
         # Persist current configuration and problem
@@ -28,7 +21,7 @@ class Optimizer:
         for b in binary:
             fv = float(int(''.join([str(i) for i in b]), 2))
 
-            # Rescale float within lower and upper bounds of
+            # Rescale float within lower and upper bounds of problem
             fv = fv / (2 ** self.hj.bit_computing - 1) * (self.hj.pid_ub - self.hj.pid_lb) + self.hj.pid_lb
             float_vals.append(fv)
         return float_vals

@@ -19,7 +19,7 @@ class PSO(Optimizer):
         self.swarm()
 
     def swarm(self):
-        # Incoming population migrates to starting population, reset velocity and continuous permutation values
+        # Incoming population migrates to starting population, reset continuous permutation values
         if self.hj.population:
             self.reset_inherited_population_attr()
 

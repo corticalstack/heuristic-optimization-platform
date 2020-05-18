@@ -24,6 +24,7 @@ class SA(Optimizer):
 
     def optimize(self):
         if self.initial_temp == 0:
+            self.hj.pid_cls.initial_sample = self.hj.pid_cls.generate_initial_sample()
             self.initial_temp = self.set_initial_temp()
 
         lg.msg(logging.DEBUG, 'Initial temperature set to {}'.format(self.initial_temp))
