@@ -8,6 +8,7 @@ from optimizers.particle import Particle
 from optimizers.variator import Variator
 from optimizers.crossover import Crossover
 from random import Random
+import numpy as np
 import os
 import sys
 import yaml
@@ -16,7 +17,8 @@ import copy
 from importlib import import_module
 import time
 import statistics
-
+seed = 42  # Define seed for both numpy.random and random.random
+np.random.seed(seed)
 script_name = os.path.basename(sys.argv[0]).split('.')
 
 
@@ -28,7 +30,7 @@ class HeuristicsManager:
         lg.msg(logging.INFO, 'Initialising Heuristics Manager')
         self.results_path = results_path
         self.random = Random()
-        #self.random.seed(42)
+        self.random.seed(seed)
         self.vis = Visualisation()
         self.settings = self.get_config()
         self.problems_optimizers = []
@@ -143,8 +145,9 @@ class HeuristicsManager:
         job.budget = job.pid_cls.n * job.comp_budget_base
         job.budget_total = job.budget
 
-        # ----- Iterations Since Last Improvement
+        # ----- Iterations since last improvement and improvement count
         job.iter_last_imp = [job.budget_total for _ in range(job.runs_per_optimizer)]
+        job.imp_count = [0 for _ in range(job.runs_per_optimizer)]
 
         # Set low-level heuristic sampling and computational budget
         if 'llh_sample_runs' in self.settings['opt'][job.oid]:
@@ -257,7 +260,7 @@ class HeuristicsManager:
 
             j.start_time = time.time()
 
-            if j.bid != 'n/a':
+            if j.bid != 'na':
                 lg.msg(logging.INFO, 'Benchmark {}'.format(j.bid))
             lg.msg(logging.INFO, 'Optimizing {} with {} ({})'.format(j.pid_desc, j.oid, j.oid_desc))
             lg.msg(logging.INFO, 'Executing {} sample runs'.format(j.runs_per_optimizer))
@@ -266,7 +269,7 @@ class HeuristicsManager:
                 j.run = r
                 self.pre_processing(j)  # Controller pre-processing
                 j.pid_cls.pre_processing()  # Problem pre-processing
-                j.oid_cls.run(jobs=self.jobs)  # Execute optimizer
+                j.oid_cls.run(jobs=self.jobs, fromhyper=False)  # Execute optimizer
                 self.post_processing(j)  # Controller post-processing
 
             j.avg_comp_time_s = j.total_comp_time_s / j.runs_per_optimizer
@@ -348,7 +351,12 @@ class HeuristicsManager:
                             other[j.oid]['budget_no_imp_pct'] = round(((j.budget_total - other[j.oid]['avg_iter_last_imp']) / j.budget_total) * 100, 2)
                         else:
                             other[j.oid]['budget_no_imp_pct'] = 'n/a'
-                        other[j.oid]['imp_count'] = j.imp_count
+
+                        if j.imp_count:
+                            other[j.oid]['avg_imp_count'] = int(statistics.mean(j.imp_count))
+                        else:
+                            other[j.oid]['avg_imp_count'] = 'n/a'
+
                         if j.bid != 'na':
                             bdp[j.oid] = [j.pid_cls.ilb, j.pid_lb_diff_pct, j.pid_cls.iub, j.pid_ub_diff_pct]
                         else:
@@ -364,7 +372,7 @@ class HeuristicsManager:
 
                 cols = ['Optimizer', 'Min Fitness', 'Max Fitness', 'Avg Fitness', 'StDev', 'Wilcoxon', 'LB', 'LB Diff %',
                         'UB', 'UB Diff %', 'Avg Cts', 'Budget', 'Budget Rem', 'Avg Iter Last Imp', 'Budget No Imp %',
-                        'Imp Count']
+                        'Avg Imp Count']
                 summary.append(cols)
                 lg.msg(logging.INFO, format_spec.format(*cols))
 
@@ -384,11 +392,11 @@ class HeuristicsManager:
                                                             other[k]['budget_rem'],
                                                             other[k]['avg_iter_last_imp'],
                                                             other[k]['budget_no_imp_pct'],
-                                                            other[k]['imp_count']))
+                                                            other[k]['avg_imp_count']))
                     summary.append([str(k), str(v['minf']), str(v['maxf']), str(v['mean']), str(v['stdev']), str(v['wts']),
                                    str(bdp[k][0]), str(bdp[k][1]), str(bdp[k][2]), str(bdp[k][3]),
                                     str(round(other[k]['avg_comp_time_s'], 3)), other[k]['budget'], other[k]['budget_rem'],
-                                    other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['imp_count']])
+                                    other[k]['avg_iter_last_imp'], other[k]['budget_no_imp_pct'], other[k]['avg_imp_count']])
 
                 # Summary per problem
                 Helper.write_to_csv(summary, self.results_path + '/' + p + ' ' + b + ' problem summary.csv')

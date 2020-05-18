@@ -49,7 +49,7 @@ class Hyper(Optimizer):
                 v.budget = self.hj.llh_sample_budget
                 if v.initial_sample:
                     v.pid_cls.initial_sample = v.pid_cls.generate_initial_sample()
-                v.oid_cls.run()
+                v.oid_cls.run(fromhyper=True)
                 self.hj.budget -= self.hj.llh_sample_budget
                 self.hj.budget += v.budget  # Credit any early termination or debit any budget overrun
                 self.llh_fitness[k].append(v.rbest.fitness)  # Insert at start

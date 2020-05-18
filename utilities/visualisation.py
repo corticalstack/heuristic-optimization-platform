@@ -35,19 +35,19 @@ class Visualisation:
             df_ft[k] = v
 
         if not df_ft.empty:
-            distinct_colours = df_ft.shape[1]
-            shades = 1
-            total_colours = shades * distinct_colours
-
-            # Generate colour map
-            cmap = self.generate_colormap(total_colours)
-
-            # Register colour map and transform to seaborn palette
-            matplotlib.cm.register_cmap('alloptcmap', cmap)
-            cpal = sns.color_palette('alloptcmap', n_colors=total_colours, desat=1.0)
+            # distinct_colours = df_ft.shape[1]
+            # shades = 2
+            # total_colours = shades * distinct_colours
+            #
+            # # Generate colour map
+            # cmap = self.generate_colormap(total_colours)
+            #
+            # # Register colour map and transform to seaborn palette
+            # matplotlib.cm.register_cmap('alloptcmap', cmap)
+            # cpal = sns.color_palette('alloptcmap', n_colors=total_colours, desat=1.0)
 
             # Plot multi line chart for all optimizer trends
-            g = sns.relplot(kind="line", data=df_ft, dashes=False, palette=cpal)
+            g = sns.relplot(kind="line", data=df_ft, dashes=False, palette='hls')
 
             # Get access to matplotlib control via g.axes
             axes = g.axes.flatten()

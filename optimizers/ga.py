@@ -46,8 +46,9 @@ class GA(Optimizer):
                 self.hj.rbest.fitness = self.hj.population[0].fitness
                 self.hj.rbest.candidate = self.hj.population[0].candidate
                 self.hj.rft.append(self.hj.population[0].fitness)
-                self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
-                self.hj.imp_count += 1
+                if not self.fromhyper:
+                    self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
+                    self.hj.imp_count[self.hj.run] += 1
 
             self.parents = self.parent_selection()
 

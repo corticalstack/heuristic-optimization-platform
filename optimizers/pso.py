@@ -57,8 +57,9 @@ class PSO(Optimizer):
                 if c.fitness < self.hj.rbest.fitness:
                     self.set_rbest(c)
                     self.hj.rft.append(c.fitness)
-                    self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
-                    self.hj.imp_count += 1
+                    if not self.fromhyper:
+                        self.hj.iter_last_imp[self.hj.run] = self.hj.budget_total - self.hj.budget
+                        self.hj.imp_count[self.hj.run] += 1
 
     def set_rbest(self, candidate):
         self.hj.rbest = copy.deepcopy(candidate)

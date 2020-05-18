@@ -39,7 +39,6 @@ class InspyredWrapper:
         args['slf'].hj.rft.sort()
         if args['slf'].hj.rft[0] < args['slf'].hj.rbest.fitness:
             args['slf'].hj.rbest.fitness = args['slf'].hj.rft[0]
-            args['slf'].hj.iter_last_imp[args['slf'].hj.run] = args['slf'].hj.budget_total - args['slf'].hj.budget
-            args['slf'].hj.imp_count += 1
-
-
+            if not args['slf'].fromhyper:
+                args['slf'].hj.iter_last_imp[args['slf'].hj.run] = args['slf'].hj.budget_total - args['slf'].hj.budget
+                args['slf'].hj.imp_count[args['slf'].hj.run] += 1

@@ -3,6 +3,7 @@ class Optimizer:
         # Persist current configuration and problem
         self.random = kwargs['random']
         self.hj = kwargs['hopjob']
+        self.fromhyper = False
 
     def run(self, **kwargs):
         self.pre_processing(**kwargs)
@@ -27,7 +28,7 @@ class Optimizer:
         return float_vals
 
     def pre_processing(self, **kwargs):
-        pass
+        self.fromhyper = kwargs['fromhyper']
 
     def post_processing(self, **kwargs):
         pass
