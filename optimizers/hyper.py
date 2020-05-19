@@ -61,7 +61,7 @@ class Hyper(Optimizer):
 
     def set_pop(self):
         candidates = list(zip([y for x in self.llh_fitness for y in x], [y for x in self.llh_candidates for y in x]))
-        candidates.sort()
+        candidates.sort(key=lambda x: x[0])
         population = []
 
         for fitness, candidate in candidates[:1]:
