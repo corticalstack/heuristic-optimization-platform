@@ -51,7 +51,7 @@ class GA(Optimizer):
                     self.hj.imp_count[self.hj.run] += 1
 
             self.parents = self.parent_selection()
-            if not self.parents:
+            if not self.parents:  # Convergence
                 break
 
             self.children = self.parent_crossover()
@@ -61,8 +61,7 @@ class GA(Optimizer):
             self.hj.population = self.update_population()
 
     def parent_selection(self):
-        # Fitness proportionate selection (FPS), assigning probabilities to individuals based on fitness
-        # Terminate if optimal found
+        # Stochastic Universal Sampling
         max_fitness = sum([particle.fitness for particle in self.hj.population])
         if max_fitness == 0:
             return False

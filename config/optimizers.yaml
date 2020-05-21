@@ -25,7 +25,7 @@
     ub: null
     reheat: False
   SA-N-RI:
-    enabled: True
+    enabled: False
     description: Simulated Annealing with remove-insert variator
     type: low
     optimizer: SA
@@ -37,7 +37,7 @@
     ub: null
     reheat: False
   SA-N-TF:
-    enabled: True
+    enabled: False
     description: Simulated Annealing with n to first variator
     type: low
     optimizer: SA
@@ -69,7 +69,7 @@
     lb: 0
     ub: 4
   GA-N-EA-1P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with exchange adjacent variator and one-point crossover
     type: low
     optimizer: GA
@@ -84,7 +84,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-EA-2P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm exchange adjacent variator and two-point crossover
     type: low
     optimizer: GA
@@ -129,7 +129,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-E-2P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with exchange variator and two-point crossover
     type: low
     optimizer: GA
@@ -144,7 +144,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-E-SBOX:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with exchange variator and sbox crossover
     type: low
     optimizer: GA
@@ -159,7 +159,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-1P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with remove-insert variator and one-point crossover
     type: low
     optimizer: GA
@@ -174,7 +174,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-2P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with remove-insert variator and two-point crossover
     type: low
     optimizer: GA
@@ -189,7 +189,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-RI-SBOX:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with remove-insert variator and sbox crossover
     type: low
     optimizer: GA
@@ -204,7 +204,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-1P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with n to first variator and one-point crossover
     type: low
     optimizer: GA
@@ -219,7 +219,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-2P:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with n to first variator and two-point crossover
     type: low
     optimizer: GA
@@ -234,7 +234,7 @@
     number_children: 10
     parent_gene_similarity_threshold: 0.8
   GA-N-TF-SBOX:
-    enabled: True
+    enabled: False
     description: Genetic algorithm with n to first variator and sbox crossover
     type: low
     optimizer: GA
@@ -287,7 +287,7 @@
     llh_sample_budget_coeff:  0.01
     llh_budget_coeff: 0.05
   HH-GA-ALL:
-    enabled: True
+    enabled: False
     description: Hyper heuristics - All GA Variants
     type: hyper
     optimizer: HH
@@ -311,7 +311,7 @@
     llh_budget_coeff: 0.05
   HH-GA-N-E-SBOX-PSO-SA-N-RI:
     enabled: True
-    description: Hyper heuristics - DE & ES
+    description: Hyper heuristics - GA & PSO & SA
     type: hyper
     optimizer: HH
     low_level_selection_pool:

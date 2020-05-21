@@ -8,9 +8,9 @@
         taillard_20_5_i1.txt:
             enabled: False
         taillard_20_10_i1.txt:
-            enabled: True
-        taillard_50_10_i1.txt:
             enabled: False
+        taillard_50_10_i1.txt:
+            enabled: True
         taillard_100_10_i1.txt:
             enabled: False
     lb: 0
@@ -19,7 +19,7 @@
     local_coeff: 2.1
     global_coeff: 2.1
   RASTRIGIN:
-    enabled: True
+    enabled: False
     type: continuous
     description: Rastrigin
     lb: -5.12

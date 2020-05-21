@@ -9,7 +9,7 @@ class Variator:
 
     def variator_n_exchange(self, candidate):
         """
-        Exchange job positions and i and j
+        Exchange positions and i and j
         """
         def _exchange(_c):
             ops = self.random.sample(range(0, len(_c)), 2)
@@ -26,7 +26,7 @@ class Variator:
 
     def variator_n_exchange_adjacent(self, candidate):
         """
-        Exchange job positions and i and i+1
+        Exchange positions and i and i+1
         """
         def _exchange_adjacent(_c):
             i = self.random.randint(0, len(_c) - 1)
