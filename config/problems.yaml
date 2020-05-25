@@ -6,11 +6,11 @@
     description: Flow Shop Scheduling Problem
     benchmarks:
         taillard_20_5_i1.txt:
-            enabled: False
+            enabled: True
         taillard_20_10_i1.txt:
             enabled: False
         taillard_50_10_i1.txt:
-            enabled: True
+            enabled: False
         taillard_100_10_i1.txt:
             enabled: False
     lb: 0
